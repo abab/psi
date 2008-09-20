@@ -1,4 +1,4 @@
-QT += xml network qt3support
+QT += xml network qt3support sql
 
 # modules
 include($$PWD/protocol/protocol.pri)
@@ -7,6 +7,7 @@ include($$PWD/privacy/privacy.pri)
 include($$PWD/capabilities/capabilities.pri)
 include($$PWD/utilities/utilities.pri)
 include($$PWD/tabs/tabs.pri)
+include($$PWD/history/history.pri)
 include($$PWD/Certificates/Certificates.pri)
 
 # tools

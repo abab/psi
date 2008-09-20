@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/history" >
+        <file alias="owner.png" >pics/owner.png</file>
+        <file alias="contact_chat.png" >pics/contact_chat.png</file>
+        <file alias="contact_muc.png" >pics/contact_muc.png</file>
+        <file alias="collection.png" >pics/collection.png</file>
+        <file alias="msg_recv.png" >pics/msg_recv.png</file>
+        <file alias="msg_sent.png" >pics/msg_sent.png</file>
+        <file alias="msg_note.png" >pics/msg_note.png</file>
+    </qresource>
+</RCC>
