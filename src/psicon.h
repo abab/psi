@@ -39,8 +39,9 @@ class ContactView;
 class AutoUpdater;
 class EventDlg;
 class UserListItem;
-class EDB;
-class EDBItem;
+namespace History {
+	class Storage;	// ALEKSI
+}
 class ProxyManager;
 class QMenuBar;
 class FileTransDlg;
@@ -74,7 +75,7 @@ public:
 
 	PsiContactList* contactList() const;
 	ContactView *contactView() const;
-	EDB *edb() const;
+	History::Storage *storage() const;	// ALEKSI
 	TuneController* tuneController() const;
 	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;

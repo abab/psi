@@ -57,7 +57,7 @@
 #include "userlist.h"
 #include "eventdlg.h"
 #include "pgputil.h"
-#include "eventdb.h"
+#include "history/backend.h"
 #include "proxy.h"
 #ifdef PSIMNG
 #include "psimng.h"
@@ -221,9 +221,9 @@ public:
 				ua.toOptions(&accountTree, base);
 			}
 		}
-		QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");	
+		QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");
 		accountTree.saveOptions(accountsFile.fileName(), "accounts", ApplicationInfo::optionsNS(), ApplicationInfo::version());;
-		
+
 	}
 
 private slots:
@@ -252,7 +252,7 @@ public:
 	QList<item_dialog*> dialogList;
 	int eventId;
 	QStringList recentNodeList; // FIXME move this to options system?
-	EDB *edb;
+	History::Storage *storage;	// ALEKSI
 	S5BServer *s5bServer;
 	ProxyManager *proxy;
 	IconSelectPopup *iconSelect;
@@ -282,7 +282,9 @@ PsiCon::PsiCon()
 	d->ftwin = 0;
 
 	d->eventId = 0;
-	d->edb = new EDBFlatFile;
+
+	//ALEKSI
+	d->storage = History::Storage::getStorage(pathToProfile(activeProfile) + "/history.db");
 
 	d->s5bServer = 0;
 	d->proxy = 0;
@@ -304,7 +306,7 @@ PsiCon::~PsiCon()
 
 	delete d->autoUpdater;
 	delete d->actionList;
-	delete d->edb;
+	delete d->storage;	// ALEKSI
 	delete d->defaultMenuBar;
 	delete d->tabManager;
 	delete d;
@@ -337,13 +339,13 @@ bool PsiCon::init()
 		&& !QFile::exists(backupfile)) {
 		QFile::copy(optionsFile(), backupfile);
 	}
-	
+
 	// advanced widget
 	GAdvancedWidget::setStickEnabled( false ); //until this is bugless
 	GAdvancedWidget::setStickToWindows( false ); //again
 	GAdvancedWidget::setStickAt( 5 );
-	
-	
+
+
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();
 	//load the system-wide defaults, if they exist
@@ -372,17 +374,17 @@ bool PsiCon::init()
 	if ( common_smallFontSize < minimumFontSize )
 		common_smallFontSize = minimumFontSize;
 	FancyLabel::setSmallFontSize( common_smallFontSize );
-	
-	
+
+
 	if (!QFile::exists(optionsFile()) && !QFile::exists(pathToProfileConfig(activeProfile))) {
 		if (!options->load(":/options/newprofile.xml")) {
 			qWarning("ERROR: Failed to new profile default options");
 		}
 	}
-	
+
 	// load the old profile
 	d->optionsMigration.fromFile(pathToProfileConfig(activeProfile));
-	
+
 	//load the new profile
 	//Save every time an option is changed
 	options->load(optionsFile());
@@ -391,12 +393,12 @@ bool PsiCon::init()
 	//just set a dummy option to trigger saving
 	options->setOption("trigger-save",false);
 	options->setOption("trigger-save",true);
-	
+
 	// do some late migration work
 	d->optionsMigration.lateMigration();
-	
+
 	QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");
-	bool accountMigration = false;	
+	bool accountMigration = false;
 	if (!accountsFile.exists()) {
 		accountMigration = true;
 		int idx = 0;
@@ -412,9 +414,9 @@ bool PsiCon::init()
 	d->proxy = new ProxyManager(&d->accountTree, this);
 	if (accountMigration) d->proxy->migrateItemList(d->optionsMigration.proxyMigration);
 	connect(d->proxy, SIGNAL(settingsChanged()), SLOT(proxy_settingsChanged()));
-	
+
 	connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
-	
+
 	QDir profileDir( pathToProfile( activeProfile ) );
 	profileDir.rmdir( "info" ); // remove unused dir
 
@@ -434,11 +436,11 @@ bool PsiCon::init()
 		d->actionList = new PsiActionList( this );
 
 	new PsiConObject(this);
-		
+
 	Anim::setMainThread(QThread::currentThread());
 
 	// setup the main window
-	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this, "psimain"); 
+	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this, "psimain");
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
 
 	connect(d->mainwin, SIGNAL(closeProgram()), SLOT(closeProgram()));
@@ -456,7 +458,7 @@ bool PsiCon::init()
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
 
 	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
-	
+
 	if(!(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
 		d->mainwin->show();
 
@@ -480,7 +482,7 @@ bool PsiCon::init()
 
 	// Global shortcuts
 	setShortcuts();
-	
+
 	// FIXME
 #ifdef __GNUC__
 #warning "Temporary hard-coding caps registration of own version"
@@ -529,7 +531,7 @@ bool PsiCon::init()
 			ua.fromOptions(&d->accountTree, base);
 			accs += ua;
 		}
-		
+
 		// Disable accounts if necessary, and overwrite locked properties
 		if (PsiOptions::instance()->getOption("options.ui.account.single").toBool() || !PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
 			bool haveEnabled = false;
@@ -553,18 +555,18 @@ bool PsiCon::init()
 				}
 			}
 		}
-		
+
 		d->contactList->loadAccounts(accs);
-	}	
-	
+	}
+
 	checkAccountsEmpty();
-	
-	
+
+
 	// try autologin if needed
 	foreach(PsiAccount* account, d->contactList->accounts()) {
 		account->autoLogin();
 	}
-	
+
 	// show tip of the day
 	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
 		TipDlg::show(this);
@@ -657,9 +659,10 @@ PsiContactList* PsiCon::contactList() const
 	return d->contactList;
 }
 
-EDB *PsiCon::edb() const
+// ALEKSI
+History::Storage *PsiCon::storage() const
 {
-	return d->edb;
+	return d->storage;
 }
 
 ProxyManager *PsiCon::proxy() const
@@ -735,7 +738,7 @@ void PsiCon::doNewBlankMessage()
 	w->show();
 }
 
-// FIXME: smells fishy. Refactor! Probably create a common class for all dialogs and 
+// FIXME: smells fishy. Refactor! Probably create a common class for all dialogs and
 // call optionsUpdate() automatically.
 EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 {
@@ -1169,7 +1172,7 @@ QStringList PsiCon::recentGCList() const
 void PsiCon::recentGCAdd(const QString &str)
 {
 	QStringList recentList = recentGCList();
-	
+
 	// remove it if we have it
 	for(QStringList::Iterator it = recentList.begin(); it != recentList.end(); ++it) {
 		if(*it == str) {
@@ -1185,7 +1188,7 @@ void PsiCon::recentGCAdd(const QString &str)
 	while(recentList.count() > PsiOptions::instance()->getOption("options.muc.recent-joins.maximum").toInt()) {
 		recentList.remove(recentList.fromLast());
 	}
-	
+
 	PsiOptions::instance()->setOption("options.muc.recent-joins.jids", recentList);
 }
 
@@ -1212,7 +1215,7 @@ void PsiCon::recentBrowseAdd(const QString &str)
 	while(recentList.count() > 10) {
 		recentList.remove(recentList.fromLast());
 	}
-	
+
 	PsiOptions::instance()->setOption("options.ui.service-discovery.recent-jids", recentList);
 }
 
@@ -1444,5 +1447,5 @@ void PsiCon::forceSavePreferences()
 {
 	PsiOptions::instance()->save(optionsFile());
 }
- 
+
 #include "psicon.moc"

@@ -93,7 +93,7 @@ public:
 		nickSeparator = ":";
 		typingStatus = Typing_Normal;
 		nonAnonymous = false;
-		
+
 		trackBar = false;
 		oldTrackBarPosition = 0;
 	}
@@ -120,7 +120,7 @@ public:
 	QString lastSearch;
 
 	QPointer<MUCConfigDlg> configDlg;
-	
+
 public:
 	bool trackBar;
 protected:
@@ -170,18 +170,18 @@ public:
 			cursor.clearSelection();
 			te_log()->setTextCursor(cursor);
 		}
-		
+
 		bool found = te_log()->find(str);
 		if(!found) {
 			if (!startFromBeginning)
 				return internalFind(str, true);
-			
+
 			return false;
 		}
 
 		return true;
 	}
-	
+
 private:
 	void removeTrackBar(QTextCursor &cursor)
 	{
@@ -193,7 +193,7 @@ private:
 			cursor.setBlockFormat(blockFormat);
 		}
 	}
-		
+
 	void addTrackBar(QTextCursor &cursor)
 	{
 		cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
@@ -204,7 +204,7 @@ private:
 		cursor.setBlockFormat(blockFormat);
 	}
 
-public:		
+public:
 	void doTrackBar()
 	{
 		trackBar = false;
@@ -228,7 +228,7 @@ public:
 
 public:
 	QString lastReferrer;  // contains nick of last person, who have said "yourNick: ..."
-protected:		
+protected:
 	// Nick auto-completion code follows...
 	enum TypingStatus {
 		Typing_Normal = 0,
@@ -351,19 +351,19 @@ protected:
 		return newText;
 	}
 
-public:		
+public:
 	void doAutoNickInsertion() {
 		QTextCursor cursor = mle()->textCursor();
-		
+
 		// we need to get index from beginning of current block
 		int index = cursor.position();
 		cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
 		index -= cursor.position();
-		
+
 		QString paraText = cursor.block().text();
 		QString origText = paraText.left(index);
 		QString newText;
-		
+
 		bool replaced = false;
 
 		if ( typingStatus == Typing_MultipleSuggestions ) {
@@ -403,7 +403,7 @@ public:
 		if ( replaced ) {
 			mle()->setUpdatesEnabled( false );
 			int position = cursor.position() + newText.length();
-			
+
 			cursor.beginEditBlock();
 			cursor.movePosition(QTextCursor::StartOfBlock);
 			cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
@@ -412,7 +412,7 @@ public:
 			cursor.clearSelection();
 			cursor.endEditBlock();
 			mle()->setTextCursor(cursor);
-			
+
 			mle()->setUpdatesEnabled( true );
 			mle()->viewport()->update();
 		}
@@ -421,7 +421,7 @@ public:
 	bool eventFilter( QObject *obj, QEvent *ev ) {
 		if (te_log()->handleCopyEvent(obj, ev, mle()))
 			return true;
-	
+
 		if ( obj == mle() && ev->type() == QEvent::KeyPress ) {
 			QKeyEvent *e = (QKeyEvent *)ev;
 
@@ -452,6 +452,9 @@ public:
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	: TabbableWidget(j.userHost(), pa, tabManager)
+	// ALEKSI
+	, storage_(pa->storage())
+	, collection_(storage_->newCollection( History::MucCollection, pa->jid(), j, QDateTime::currentDateTime() ))
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 		if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
@@ -505,7 +508,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
-	
+
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(activated()), SLOT(configureRoom()));
 
@@ -657,11 +660,11 @@ void GCMainDlg::activated()
 void GCMainDlg::mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason)
 {
 	QString m = message;
-	
+
 	if (!actor.isEmpty())
 		m += tr(" by %1").arg(actor.full());
 	m += ".";
-	
+
 	if (!reason.isEmpty())
 		m += tr("\nReason: %1").arg(reason);
 
@@ -672,9 +675,9 @@ void GCMainDlg::logSelectionChanged()
 {
 #ifdef Q_WS_MAC
 	// A hack to only give the message log focus when text is selected
-	if (ui_.log->hasSelectedText()) 
+	if (ui_.log->hasSelectedText())
 		ui_.log->setFocus();
-	else 
+	else
 		ui_.mle->chatEdit()->setFocus();
 #endif
 }
@@ -702,7 +705,7 @@ void GCMainDlg::unsetConnecting()
 	d->connecting = false;
 }
 
-void GCMainDlg::action_error(MUCManager::Action, int, const QString& err) 
+void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 {
 	appendSysMsg(err, false);
 }
@@ -932,11 +935,11 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 
 	if (nick == d->self) {
 		// Update configuration dialog
-		if (d->configDlg) 
+		if (d->configDlg)
 			d->configDlg->setRoleAffiliation(s.mucItem().role(),s.mucItem().affiliation());
 		d->act_configure->setEnabled(s.mucItem().affiliation() >= MUCItem::Member);
 	}
-	
+
 	if(s.isAvailable()) {
 		// Available
 		if (s.getMUCStatuses().contains(201)) {
@@ -996,7 +999,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				if (s.status() != contact->s.status() || s.show() != contact->s.show())	{
 					QString message;
 					QString st;
-					if (s.show().isEmpty()) 
+					if (s.show().isEmpty())
 						st=tr("online");
 					else
 						st=s.show();
@@ -1008,7 +1011,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			}
 		}
 		ui_.lv_users->updateEntry(nick, s);
-	} 
+	}
 	else {
 		// Unavailable
 		if (s.hasMUCDestroy()) {
@@ -1052,7 +1055,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				else
 					message = tr("%1 has been banned").arg(nickJid);
 
-				if (!s.mucItem().reason().isEmpty()) 
+				if (!s.mucItem().reason().isEmpty())
 					message += QString(" (%1)").arg(s.mucItem().reason());
 			}
 			else if (s.getMUCStatuses().contains(303)) {
@@ -1070,7 +1073,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
 				else
 					message = tr("%1 has been kicked").arg(nickJid);
-				if (!s.mucItem().reason().isEmpty()) 
+				if (!s.mucItem().reason().isEmpty())
 					message += QString(" (%1)").arg(s.mucItem().reason());
 			}
 			else if (s.getMUCStatuses().contains(321)) {
@@ -1085,7 +1088,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				else
 					message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
 
-				if (!s.mucItem().reason().isEmpty()) 
+				if (!s.mucItem().reason().isEmpty())
 					message += QString(" (%1)").arg(s.mucItem().reason());
 			}
 			else if (s.getMUCStatuses().contains(322)) {
@@ -1100,7 +1103,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				else
 					message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
 
-				if (!s.mucItem().reason().isEmpty()) 
+				if (!s.mucItem().reason().isEmpty())
 					message += QString(" (%1)").arg(s.mucItem().reason());
 			}
 			else {
@@ -1113,7 +1116,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		}
 		ui_.lv_users->removeEntry(nick);
 	}
-	
+
 	if (!s.capsNode().isEmpty()) {
 		Jid caps_jid(s.mucItem().jid().isEmpty() || !d->nonAnonymous ? Jid(jid()).withResource(nick) : s.mucItem().jid());
 		account()->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
@@ -1240,9 +1243,9 @@ QString GCMainDlg::getNickColor(QString nick)
 		}
 		sender=nicks[nick];
 	}
-	
+
 	QStringList nickColors = PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
-	
+
 	if(!PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool() || nickColors.empty()) {
 		return "#000000";
 	}

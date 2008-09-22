@@ -77,12 +77,12 @@
 #include "statusdlg.h"
 #include "infodlg.h"
 #include "adduserdlg.h"
-#include "historydlg.h"
 #include "capsmanager.h"
 #include "registrationdlg.h"
 #include "searchdlg.h"
 #include "discodlg.h"
-#include "eventdb.h"
+#include "history/dialog.h"
+#include "history/backend.h"
 #include "accountmodifydlg.h"
 #include "passphrasedlg.h"
 #include "voicecaller.h"
@@ -331,14 +331,14 @@ public:
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
-	
+
 	TabManager *tabManager;
 
 #ifdef GOOGLE_FT
 	// Google file transfer manager
 	GoogleFTManager* googleFTManager;
 #endif
-	
+
 #ifdef WHITEBOARDING
 	// SXE
 	SxeManager* sxeManager;
@@ -440,7 +440,7 @@ public slots:
 		xmlRingbuf[xmlRingbufWrite].time = QDateTime::currentDateTime();
 		xmlRingbufWrite = (xmlRingbufWrite + 1) % xmlRingbuf.count();
 	}
-	
+
 	void pm_proxyRemoved(QString proxykey)
 	{
 		if (acc.proxyID == proxykey) acc.proxyID = "";
@@ -538,7 +538,7 @@ public:
 	{
 		while (!dialogList.isEmpty()) {
 			item_dialog2* i = dialogList.takeFirst();
-			
+
 			delete i->widget;
 			delete i;
 		}
@@ -1014,9 +1014,10 @@ EventQueue *PsiAccount::eventQueue() const
 	return d->eventQueue;
 }
 
-EDB *PsiAccount::edb() const
+// ALEKSI
+History::Storage *PsiAccount::storage() const
 {
-	return d->psi->edb();
+	return d->psi->storage();
 }
 
 PsiCon *PsiAccount::psi() const
@@ -1305,9 +1306,9 @@ void PsiAccount::tls_handshaken()
 	if (result != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
 		CertificateErrorDialog errorDialog(
 				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-				d->jid.host(), 
+				d->jid.host(),
 				cert,
-				result, 
+				result,
 				d->tls->peerCertificateValidity(),
 				ApplicationInfo::getCertificateStoreSaveDir());
 		connect(this, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()));
@@ -1380,10 +1381,10 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 			d->stream->setRealm(d->jid.domain());
 		}
 	}
-	else if (d->acc.customAuth && !d->acc.realm.isEmpty()) 
+	else if (d->acc.customAuth && !d->acc.realm.isEmpty())
 		qWarning("Custom authentication realm not used");
-	
-	if(d->acc.customAuth) 
+
+	if(d->acc.customAuth)
 		d->stream->setAuthzid(d->jid.bare());
 	d->stream->continueAfterParams();
 }
@@ -1817,7 +1818,7 @@ void PsiAccount::client_rosterItemRemoved(const RosterItem &r)
 
 void PsiAccount::tryVerify(UserListItem *u, UserResource *ur)
 {
-	if(PGPUtil::instance().pgpAvailable()) 
+	if(PGPUtil::instance().pgpAvailable())
 		verifyStatus(u->jid().withResource(ur->name()), ur->status());
 }
 
@@ -2200,7 +2201,7 @@ void PsiAccount::incomingGoogleFileTransfer(GoogleFileTransfer* ft)
 		d->show();
 		ft->accept();
 	}
-	else 
+	else
 		ft->reject();
 }
 #endif
@@ -2755,7 +2756,7 @@ void PsiAccount::itemRetracted(const Jid& j, const QString& n, const PubSubRetra
 			// FIXME: try to find the right resource using JEP-33 'replyto'
 			//UserResourceList::Iterator rit = u->userResourceList().find(<resource>);
 			//bool found = (rit == u->userResourceList().end()) ? false: true;
-			//if(found) 
+			//if(found)
 			//	(*rit).setTune(tune);
 			u->setTune(QString());
 			cpUpdate(*u);
@@ -2856,7 +2857,7 @@ QList<UserListItem*> PsiAccount::findRelevant(const Jid &j) const
 				if(u->jid().resource() != j.resource())
 					continue;
 			} else {
-				// skip status changes from muc participants 
+				// skip status changes from muc participants
 				// if the MUC somehow got into userList.
 				if (!j.resource().isEmpty() && d->groupchats.contains(j.bare())) continue;
 			}
@@ -3203,8 +3204,9 @@ void PsiAccount::actionHistory(const Jid &j)
 	if(w)
 		bringToFront(w);
 	else {
-		w = new HistoryDlg(j, this);
-		connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
+		// ALEKSI
+		w = new HistoryDlg(this->storage(), client()->rootTask());
+		//connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
 		w->show();
 	}
 }
@@ -3300,7 +3302,7 @@ void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, boo
 {
 	if(ownJid.isEmpty())
 		ownJid = jid();
-	
+
 	d->wbManager->openWhiteboard(target, ownJid, groupChat, true);
 }
 #endif
@@ -3516,7 +3518,7 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 	//} else if (querytype == "vcard") {
 	//	pa->actionInfo(entity, true, true);
 	} else {
-		
+
 		// TODO: default case - be more smart!! ;-)
 
 		//if (QMessageBox::question(0, tr("Hmm.."), QString(tr("So, you'd like to open %1 URI, right?\n"
@@ -3648,7 +3650,7 @@ void PsiAccount::dj_formSubmit(const XData& data, const QString& thread, const J
 	m.setTo(jid);
 	m.setThread(thread, true);
 	m.setForm(data);
-	
+
 	d->client->sendMessage(m);
 }
 
@@ -3659,7 +3661,7 @@ void PsiAccount::dj_formCancel(const XData& data, const QString& thread, const J
 	m.setTo(jid);
 	m.setThread(thread, true);
 	m.setForm(data);
-  
+
 	d->client->sendMessage(m);
 }
 
@@ -3822,9 +3824,9 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		delete e;
 		return;
 	}
-	//FIXME(KIS): must now cause the event to be recreated from this xml or such. Horrid. 	
+	//FIXME(KIS): must now cause the event to be recreated from this xml or such. Horrid.
 #endif
-	
+
 	if(d->acc.opt_log && activationType != FromXml) {
 		if(e->type() == PsiEvent::Message || e->type() == PsiEvent::Auth) {
 			// don't log private messages
@@ -3954,7 +3956,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 				}
 				putToQueue = false;
 			}
-		} 
+		}
 		else if(ae->authType() == "subscribed") {
 			if(!PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool())
 				putToQueue = false;
@@ -4276,15 +4278,10 @@ void PsiAccount::chatMessagesRead(const Jid &j)
 
 void PsiAccount::logEvent(const Jid &j, PsiEvent *e)
 {
-	EDBHandle *h = new EDBHandle(d->psi->edb());
-	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
-	h->append(j, e);
-}
-
-void PsiAccount::edb_finished()
-{
-	EDBHandle *h = (EDBHandle *)sender();
-	delete h;
+//	FIXME ALEKSI
+//	EDBHandle *h = new EDBHandle(d->psi->edb());
+//	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
+//	h->append(j, e);
 }
 
 void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
@@ -4409,7 +4406,7 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 	w->presence(j.resource(), s);
 
 	// pass through the core presence handling also (so that roster items
-	// from groupchat contacts get a resource as well 
+	// from groupchat contacts get a resource as well
 	Resource r;
 	r.setName(j.resource());
 	r.setStatus(s);

@@ -33,6 +33,8 @@
 
 #include "tabbablewidget.h"
 
+// ALEKSI
+#include "history/backend.h"
 
 namespace XMPP
 {
@@ -206,6 +208,10 @@ private:
 	QString eventId_;
 	ChatState contactChatState_;
 	ChatState lastChatState_;
+
+	// ALEKSI
+	History::Storage* storage_;
+	History::CollectionInfo collection_;
 };
 
 #endif

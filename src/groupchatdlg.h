@@ -32,6 +32,9 @@
 #include "mucmanager.h"
 #include "advwidget.h"
 
+//ALEKSI
+#include "history/backend.h"
+
 using namespace XMPP;
 
 class PsiCon;
@@ -101,7 +104,7 @@ public slots:
 	virtual void ensureTabbedCorrectly();
 
 	void optionsUpdate();
-	
+
 private slots:
 	void scrollUp();
 	void scrollDown();
@@ -147,6 +150,10 @@ private:
 	int nicknumber;
 	PsiOptions* options_;
 	QDateTime lastMsgTime_;
+
+	// ALEKSI
+	History::Storage* storage_;
+	History::CollectionInfo collection_;
 };
 
 class GCFindDlg : public QDialog

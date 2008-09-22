@@ -155,8 +155,6 @@ HEADERS += \
 	$$PWD/gcuserview.h \
 	$$PWD/infodlg.h \
 	$$PWD/translationmanager.h \
-	$$PWD/eventdb.h \
-	$$PWD/historydlg.h \
 	$$PWD/tipdlg.h \
 	$$PWD/searchdlg.h \
 	$$PWD/registrationdlg.h \
@@ -267,8 +265,6 @@ SOURCES += \
 	$$PWD/gcuserview.cpp \
 	$$PWD/infodlg.cpp \
 	$$PWD/translationmanager.cpp \
-	$$PWD/eventdb.cpp \
-	$$PWD/historydlg.cpp \
 	$$PWD/searchdlg.cpp \
 	$$PWD/registrationdlg.cpp \
 	$$PWD/psitoolbar.cpp \

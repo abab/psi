@@ -89,6 +89,9 @@ ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabMan
 ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	: TabbableWidget(jid, pa, tabManager)
 	, highlightersInstalled_(false)
+		// ALEKSI
+	, storage_(pa->storage())
+	, collection_(storage_->newCollection(History::ChatCollection, pa->jid(), jid, QDateTime::currentDateTime()))
 {
 	if (PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool()) {
 		setAttribute(Qt::WA_MacMetalStyle);
@@ -691,6 +694,9 @@ void ChatDlg::doSend()
 		}
 	}
 	else {
+		// FIXME ALEKSI
+		storage_->newEntry(collection_.id(), History::SentMessageEntry, m.from(),
+						m.nick(), m.body(), QDateTime::currentDateTime());
 		aSend(m);
 		doneSend();
 	}
@@ -755,6 +761,10 @@ void ChatDlg::incomingMessage(const Message &m)
 			setContactChatState(XMPP::StateNone);
 		}
 		appendMessage(m);
+
+		// FIXME ALEKSI
+		storage_->newEntry(collection_.id(), History::ReceivedMessageEntry, m.from(), m.nick(),
+									m.body(), QDateTime::currentDateTime());
 	}
 }
 
