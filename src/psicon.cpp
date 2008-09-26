@@ -542,7 +542,7 @@ bool PsiCon::init()
 						haveEnabled = it->opt_enabled;
 						if (it->opt_enabled) {
 							if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty())
-								it->jid = JIDUtil::accountFromString(Jid(it->jid).user()).bare();
+								it->jid = JIDUtil::accountFromString(Jid(it->jid).node()).bare();
 						}
 					}
 					else
@@ -551,7 +551,7 @@ bool PsiCon::init()
 				else {
 					// Overwirte locked properties
 					if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty())
-						it->jid = JIDUtil::accountFromString(Jid(it->jid).user()).bare();
+						it->jid = JIDUtil::accountFromString(Jid(it->jid).node()).bare();
 				}
 			}
 		}

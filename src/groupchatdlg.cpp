@@ -228,6 +228,40 @@ public:
 
 public:
 	QString lastReferrer;  // contains nick of last person, who have said "yourNick: ..."
+
+public slots:
+	void insertNick(const QString& nick)
+	{
+		if (nick.isEmpty())
+			return;
+
+		QTextCursor cursor(mle()->textCursor());
+
+		mle()->setUpdatesEnabled(false);
+		cursor.beginEditBlock();
+
+		int index = cursor.position();
+		cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+		QString prev = cursor.selectedText();
+		cursor.setPosition(index, QTextCursor::KeepAnchor);
+
+		if (index > 0) {
+			if (!prev.isEmpty() && !prev[0].isSpace())
+				mle()->insertPlainText(" ");
+			mle()->insertPlainText(nick);
+		}
+		else {
+			mle()->insertPlainText(nick);
+			mle()->insertPlainText(nickSeparator);
+		}
+		mle()->insertPlainText(" ");
+		mle()->setFocus();
+
+		cursor.endEditBlock();
+		mle()->setUpdatesEnabled(true);
+		mle()->viewport()->update();
+	}
+
 protected:
 	// Nick auto-completion code follows...
 	enum TypingStatus {
@@ -315,8 +349,7 @@ protected:
 		}
 
 		if ( fromStart ) {
-			newText += nickSeparator;
-			newText += " ";
+			newText += nickSeparator + " ";
 		}
 
 		return newText;
@@ -332,8 +365,7 @@ protected:
 			if ( suggestedNicks.count() == 1 ) {
 				newText = suggestedNicks.first();
 				if ( fromStart ) {
-					newText += nickSeparator;
-					newText += " ";
+					newText += nickSeparator + " ";
 				}
 			}
 			else {
@@ -373,8 +405,7 @@ public:
 
 			newText = suggestedNicks[suggestedIndex];
 			if ( suggestedFromStart ) {
-				newText += nickSeparator;
-				newText += " ";
+				newText += nickSeparator + " ";
 			}
 
 			replaced = true;
@@ -451,7 +482,7 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
-	: TabbableWidget(j.userHost(), pa, tabManager)
+	: TabbableWidget(j.bare(), pa, tabManager)
 	// ALEKSI
 	, storage_(pa->storage())
 	, collection_(storage_->newCollection( History::MucCollection, pa->jid(), j, QDateTime::currentDateTime() ))
@@ -505,6 +536,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	ui_.lv_users->setMainDlg(this);
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
+	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 
 	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
@@ -581,7 +613,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 GCMainDlg::~GCMainDlg()
 {
 	if(d->state != Private::Idle)
-		account()->groupChatLeave(jid().host(), jid().user());
+		account()->groupChatLeave(jid().domain(), jid().node());
 
 	//QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
 	//ui_.log->setMimeSourceFactory(0);
@@ -727,11 +759,11 @@ void GCMainDlg::mle_returnPressed()
 
 	if(str.lower().startsWith("/nick ")) {
 		QString nick = str.mid(6).stripWhiteSpace();
-		QString norm_nick;
-		if (!nick.isEmpty() && XMPP::Jid::validResource(nick, &norm_nick)) {
+    XMPP::Jid newJid = jid().withResource(nick);
+		if (!nick.isEmpty() && newJid.isValid()) {
 			d->prev_self = d->self;
-			d->self = norm_nick;
-			account()->groupChatChangeNick(jid().host(), jid().user(), d->self, account()->status());
+			d->self = newJid.resource();
+			account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
 		}
 		ui_.mle->chatEdit()->setText("");
 		return;
@@ -850,8 +882,8 @@ void GCMainDlg::goConn()
 		d->state = Private::Connecting;
 		appendSysMsg(tr("Reconnecting..."), true);
 
-		QString host = jid().host();
-		QString room = jid().user();
+		QString host = jid().domain();
+		QString room = jid().node();
 		QString nick = d->self;
 
 		if(!account()->groupChatJoin(host, room, nick, d->password)) {
@@ -893,7 +925,7 @@ void GCMainDlg::pa_updatedActivity()
 		else if(d->state == Private::Connected) {
 			Status s = account()->status();
 			s.setXSigned("");
-			account()->groupChatSetStatus(jid().host(), jid().user(), s);
+			account()->groupChatSetStatus(jid().domain(), jid().node(), s);
 		}
 	}
 }
