@@ -3213,7 +3213,7 @@ void PsiAccount::actionHistory(const Jid &j)
 		bringToFront(w);
 	else {
 		// ALEKSI
-		w = new HistoryDlg(this->storage(), client()->rootTask());
+		w = new HistoryDlg(this->storage() /*, client()->rootTask()*/);
 		//connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
 		w->show();
 	}
