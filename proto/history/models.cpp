@@ -224,6 +224,7 @@ QModelIndex BaseHistoryModel::userDataIndex(const QModelIndex& index) const
 		return index;
 	}
 
+	// column 0 contains this all
 	QModelIndex newIndex = this->index(index.row(), 0, index.parent());
 	return newIndex;
 }
@@ -282,19 +283,7 @@ QVariant BaseHistoryModel::headerData(int section, Qt::Orientation orientation, 
 	return root_->data(section, role);
 }
 
-Qt::ItemFlags BaseHistoryModel::flags(const QModelIndex& index) const
-{
-	Q_UNUSED(index);
-	return Qt::NoItemFlags;
-}
-
-bool BaseHistoryModel::setData(const QModelIndex& index, const QVariant& value, int role)
-{
-	Q_UNUSED(index); Q_UNUSED(value); Q_UNUSED(role);
-	return false;
-}
-
-QModelIndexList BaseHistoryModel::match(const QModelIndex& start, int role, const QVariant& value, int& hits, Qt::MatchFlags flags) const
+QModelIndexList BaseHistoryModel::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
 {
 	Q_ASSERT((flags == Qt::MatchExactly) || (flags == Qt::MatchContains));
 

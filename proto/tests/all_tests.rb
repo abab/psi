@@ -1,7 +1,7 @@
 #! /usr/bin/ruby
 
 CLEAN_COMMAND = 'make -s distclean';
-QMAKE_COMMAND = '/usr/local/Trolltech/Qt-4.4.1/bin/qmake';
+QMAKE_COMMAND = '/usr/local/Trolltech/Qt-4.4.3/bin/qmake';
 MAKE_COMMAND  = 'make -j 2 -s';
 
 class Tester

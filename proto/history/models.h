@@ -128,6 +128,7 @@ public:
 
 	HistoryItem* itemFromIndex(const QModelIndex& index) const;
 	QModelIndex indexFromItem(HistoryItem* item, int column) const;
+	/*! Column 0 contains user (developer) data - ids, etc. */
 	QModelIndex userDataIndex(const QModelIndex& index) const;
 
 	virtual QModelIndex index(int row, int column, const QModelIndex& parent) const;
@@ -137,16 +138,16 @@ public:
 	virtual QVariant data(const QModelIndex& index, int role) const;
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
-	virtual Qt::ItemFlags flags(const QModelIndex &index) const;
- 	virtual bool setData(const QModelIndex &index, const QVariant &value, int role);
+	virtual Qt::ItemFlags flags(const QModelIndex &index) const = 0;
+ 	virtual bool setData(const QModelIndex &index, const QVariant &value, int role) = 0;
 
 	/*! Recursive search for items.
 	 *  \param start - parent
 	 *  \param flags Allowed flags: Qt::MatchExactly, Qt::MatchContains. Only one flag
 	 *  		is allowed, not more, not less.
 	 */
-	QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int& hits,
-			Qt::MatchFlags flags = Qt::MatchExactly) const;
+	virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits,
+			Qt::MatchFlags flags) const;
 
 #ifdef HISTORY_DEBUG_MODELS
 	QString indexToStr(const QModelIndex&) const;

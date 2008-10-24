@@ -50,5 +50,5 @@ void Xep82Test::basicTests()
 	QVERIFY(dateTimeToXep82Format(dt, true)  == "2008-08-02T09:03:05.023Z");
 }
 
-QTEST_MAIN(Xep82Test);
+QTEST_MAIN(Xep82Test)
 #include "xep82test.moc"

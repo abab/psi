@@ -54,8 +54,7 @@ void BackendTest::fillDatabase()
 	QDateTime t = QDateTime::currentDateTime();
 	QDateTime start(QDateTime::currentDateTime());
 	for(int i=0; i<collectionsCount_; ++i) {
-		XMPP::Jid contact("nodeX@contact.com");
-		contact.setNode(QString("node")+QString::number(i));
+		XMPP::Jid contact( QString("node%1@contact.com").arg(i) );
 		CollectionInfo collection = storage_->newCollection(ChatCollection, XMPP::Jid("test@owner.com"), contact, t);
 		storage_->setCollectionSubject(collection.id(), QString("Subject-") + QString::number(i));
 		for(int j=0; j<entriesCount_; ++j) {
@@ -100,5 +99,5 @@ void BackendTest::basicIntegrity()
 	}
 }
 
-QTEST_MAIN(BackendTest);
+QTEST_MAIN(BackendTest)
 #include "backendtest.moc"

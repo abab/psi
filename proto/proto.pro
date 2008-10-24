@@ -18,3 +18,8 @@ SOURCES += main.cpp
 include($$PWD/../third-party/qca/qca.pri)
 include($$PWD/../iris/iris.pri)
 LIBS += -lqca_psi	# no idea why this becomes needed... :/
+
+# I want _really_ clean code
+QMAKE_CXXFLAGS_DEBUG += -ansi -pedantic -Wno-long-long -Wold-style-cast 
+QMAKE_CXXFLAGS_DEBUG += -Wall -Wextra -Woverloaded-virtual
+# QMAKE_CXXFLAGS_DEBUG += -Weffc++ - sadly, tons of "should be initialised" warnings are brain-dead :/

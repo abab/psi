@@ -92,8 +92,7 @@ HistoryDlg::~HistoryDlg()
 void HistoryDlg::setCurrentContact(const XMPP::Jid& contact)
 {
 	Q_ASSERT(contact.isValid());
-	int hits = 1;
-	const QModelIndexList contactIndexes = collectionsUnfiltered_->match(QModelIndex(), CollectionContactJidRole, contact.bare(), hits);
+	const QModelIndexList contactIndexes = collectionsUnfiltered_->match(QModelIndex(), CollectionContactJidRole, contact.bare(), 1, Qt::MatchExactly);
 	QModelIndex proxyIndex = collections_->mapFromSource(contactIndexes.first());
 	ui_.collectionsView->setCurrentIndex(proxyIndex);
 	onCollectionsViewClicked();
@@ -169,7 +168,7 @@ void HistoryDlg::onEntryClicked(const QModelIndex& proxyIndex)
 	QVariant rawData = entriesUnfiltered_->data(sourceIndex, CollectionIdRole);
 	const Id collectionId = rawData.toLongLong();
 	int hits = 1;
-	const QModelIndex collectionSourceIndex = collectionsUnfiltered_->match(QModelIndex(), CollectionIdRole, collectionId, hits).first();
+	const QModelIndex collectionSourceIndex = collectionsUnfiltered_->match(QModelIndex(), CollectionIdRole, collectionId, hits, Qt::MatchExactly).first();
 	ui_.collectionsView->setCurrentIndex(collections_->mapFromSource(collectionSourceIndex));
 
 	const Qt::MouseButtons buttons = qApp->mouseButtons();

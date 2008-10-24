@@ -6,7 +6,7 @@
 #include <xmpp_jid.h>
 
 //LATER move this all to Iris
-static QDebug operator<<(QDebug d, const XMPP::Jid& jid) { return d << jid.full(); }
+//static QDebug operator<<(QDebug d, const XMPP::Jid& jid) { return d << jid.full(); }
 static bool operator==(const XMPP::Jid& a, const XMPP::Jid& b) { return a.compare(b); }
 
 // sadly, bool operator==(const QVariant& v1, const QVariant& v2) does not support custom types :(

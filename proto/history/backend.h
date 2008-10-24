@@ -154,7 +154,8 @@ public:
 	friend class ArchiveTask;
 
 private:
-	/*! Private constructor used by Storage. */
+	/*! Private constructors used by Storage. */
+	EntryInfo() : id_(-1), collectionId_(-1) { }
 	EntryInfo(const Id entryId, const Id collectionId, const EntryType type,
 			const XMPP::Jid& jid, const QString& nickname,
 			const QString& body, const QDateTime& utc);
@@ -212,7 +213,8 @@ public:
 	friend class ArchiveTask;
 
 private:
-	/*! Private constructor used by Storage. */
+	/*! Private constructors used by Storage. */
+	CollectionInfo() : id_(-1) { }
 	CollectionInfo(const Id collectionId, const CollectionType type,
 				const XMPP::Jid& ownerJid, const XMPP::Jid& contactJid,
 				const QString& subject, const QDateTime& start);
@@ -299,6 +301,7 @@ private:
 
 } // namespace
 
+/*
 static QDebug operator<<(QDebug d, const History::EntryInfo& entry)
 {
 	return d << "EntryInfo (" << entry.id() << entry.collectionId() << entry.contactJid()
@@ -309,5 +312,6 @@ static QDebug operator<<(QDebug d, const History::CollectionInfo& col)
 {
 	return d << "CollectionInfo (" << col.id() << col.ownerJid() << col.contactJid() << col.start() << col.subject() << ")";
 }
+*/
 
 #endif // _BACKEND_H_

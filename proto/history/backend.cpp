@@ -392,6 +392,7 @@ EntryInfo Storage::entryById(const Id entryId)
 	} else {
 		qCritical() << entryId;
 		Q_ASSERT_X(false, "Can't find entry", "Storage::entryById");
+		return EntryInfo();
 	}
 }
 
@@ -501,6 +502,7 @@ CollectionInfo Storage::collectionById(const Id collectionId)
 	} else {
 		qCritical() << collectionId;
 		Q_ASSERT_X(false, "Can't find collection", "Storage::collectionById");
+		return CollectionInfo();
 	}
 }
 
