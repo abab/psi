@@ -1,9 +1,6 @@
 DEFINES += HISTORY_DEBUG_BACKEND
 DEFINES += HISTORY_DEBUG_MODELS
 
-INCLUDEPATH *= $$PWD/../../iris/include/iris
-INCLUDEPATH *= $$PWD
-
 RESOURCES += $$PWD/icons.qrc
 
 HEADERS += $$PWD/meta.h

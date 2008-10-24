@@ -1,7 +1,7 @@
 #include <QApplication>
 
-#include "backend.h"
-#include "dialog.h"
+#include "history/backend.h"
+#include "history/dialog.h"
 
 int main(int argc, char* argv[])
 {
