@@ -76,7 +76,7 @@ private:
 	/*! Empty constructor. Use getNewConnection() instead.*/
 	SQLiteWrapper() { }
 	/*! Empty destructor. Use closeConnection() instead.*/
-	~SQLiteWrapper(){ }
+	virtual ~SQLiteWrapper(){ }
 
 	// disabled
 	SQLiteWrapper(const SQLiteWrapper&);
@@ -242,7 +242,7 @@ public:
 	 *  \return Pointer to storage or 0.
 	 */
 	static Storage* getStorage(const QString& filename);
-	~Storage();
+	virtual ~Storage();
 
 	/*! Creates new entry.
 	 *  \param collectionId - primary key of parent collection or -1.
