@@ -366,6 +366,8 @@ void HistoryDlg::refreshCollectionsModel()
 	// FIXME this is simply ugly!
 	collectionsUnfiltered_->fillModel();
 	collectionsUnfiltered_->refreshModel();
+#ifdef HISTORY_DEBUG_MODELS
 	collectionsUnfiltered_->setDebugTooltips(collectionsUnfiltered_->itemFromIndex(QModelIndex()));
+#endif
 }
 
