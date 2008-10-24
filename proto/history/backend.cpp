@@ -166,6 +166,11 @@ QSqlQuery SQLiteWrapper::exec(const QString& query, const BindedValues& values, 
 	return q;
 }
 
+QSqlQuery SQLiteWrapper::exec(const QueryWithValues& qwv, const bool mayFail) const
+{
+	return exec(qwv.query, qwv.values, mayFail);
+}
+
 void SQLiteWrapper::createSchemaIfNeeded() const
 {
 	// needed?

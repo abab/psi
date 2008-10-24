@@ -48,6 +48,14 @@ typedef QList<Id> IdList;
 
 typedef QMap<QString, QString> BindedValues;
 
+struct QueryWithValues
+{
+	QString query;
+	BindedValues values;
+	QueryWithValues(const QString& q, const BindedValues& v = BindedValues()) :
+		query(q), values(v) { }
+};
+
 class Storage;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,6 +102,7 @@ private:
 	 *  it will be reported to console.
 	 */
 	QSqlQuery exec(const QString& query, const BindedValues& values=BindedValues(), const bool mayFail=false) const;
+	QSqlQuery exec(const QueryWithValues& qwv, const bool mayFail=false) const;
 
 	/*! Creates tables, views, etc if needed.*/
 	void createSchemaIfNeeded() const;
