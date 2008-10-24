@@ -28,7 +28,7 @@
 
 using namespace History;
 
-const int ArchiveTask::RSM_MAX = 30;	// FIXME 1 is useful for testing; should be 30 in release
+const int ArchiveTask::RSM_MAX = 30;
 
 ArchiveTask::ArchiveTask(Task* parent, const TaskType type, const QString& xmlns, const RsmSet& setForPrevPage)
 : Task(parent), type_(type), xmlns_(xmlns)

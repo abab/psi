@@ -36,9 +36,6 @@ namespace History
 {
 
 const QString XEP136_NAMESPACE = "urn:xmpp:archive";
-// LATER remove this old stuff when server-side support will be better
-const QString XEP136_OLD_NAMESPACE = "urn:xmpp:tmp:archive";
-const QString XEP136_OLDEST_NAMESPACE = "http://www.xmpp.org/extensions/xep-0136.html#ns";
 
 enum TaskType {
 	DetectSupportTask			= 1,
