@@ -27,10 +27,10 @@
 #include "dialog.h"
 #include "meta.h"
 
-HistoryDlg::HistoryDlg(Storage* storage, XMPP::Task* rootTask)
-	: QWidget(0), storage_(storage), rootTask_(rootTask), collectionId_(-1)
+HistoryDlg::HistoryDlg(Storage* storage /*, XMPP::Task* rootTask*/)
+	: QWidget(0), storage_(storage) //, rootTask_(rootTask), collectionId_(-1)
 {
-	detectXepSupport();
+//	detectXepSupport();
 
 	ui_.setupUi(this);
 
@@ -250,6 +250,7 @@ void HistoryDlg::onRemoveNote()
 	qDebug() << "will be soon :)";
 }
 
+/*
 void HistoryDlg::detectXepSupport()
 {
 	if(rootTask_) {
@@ -359,6 +360,7 @@ void HistoryDlg::onArchiveTaskFinished()
 			Q_ASSERT_X(false, "Unhandled task", "HistoryDlg::onArchiveTaskFinished()");
 	}
 }
+*/
 
 // FIXME one big hack
 void HistoryDlg::refreshCollectionsModel()

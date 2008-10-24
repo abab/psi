@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	HistoryDlg dlg(s, 0);
+	HistoryDlg dlg(s);
 	dlg.show();
 	dlg.setCurrentContact(XMPP::Jid("node4@domain.com"));
 	int res = app.exec();

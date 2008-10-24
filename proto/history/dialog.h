@@ -28,7 +28,7 @@
 #include <xmpp_jid.h>
 
 #include "models.h"
-#include "archivetask.h"
+//#include "archivetask.h"
 using namespace History;
 
 #include "ui_dialog.h"
@@ -38,7 +38,7 @@ class HistoryDlg : public QWidget
 {
 	Q_OBJECT
 public:
-	HistoryDlg(Storage* storage, XMPP::Task* rootTask);
+	HistoryDlg(Storage* storage /*, XMPP::Task* rootTask*/);
 	~HistoryDlg();
 
 	void setCurrentContact(const XMPP::Jid& contact);
@@ -59,8 +59,8 @@ private slots:
 
 	void onEntrySearch(const QString& text);
 
-	void onGetCollectionsBtnClicked();
-	void onArchiveTaskFinished();
+//	void onGetCollectionsBtnClicked();
+//	void onArchiveTaskFinished();
 
 	void refreshCollectionsModel();	// FIXME HACK
 
@@ -69,7 +69,7 @@ private:
 	void menuForSelectedCollections(const QModelIndexList& sourceIndexes, QMenu*);
 	void menuForEntry(const QModelIndex& sourceIndex, QMenu* menu);
 
-	void detectXepSupport();
+//	void detectXepSupport();
 
 	HistoryDlg(const HistoryDlg &);
 	HistoryDlg& operator=(const HistoryDlg &);
@@ -88,10 +88,10 @@ private:
 	QPointer<QAction>				addNoteAction_;
 	QPointer<QAction>				removeNoteAction_;
 
-	QPointer<XMPP::Task>			rootTask_;
-	QString							xepNamespace_;
+//	QPointer<XMPP::Task>			rootTask_;
+//	QString							xepNamespace_;
 
-	Id								collectionId_;	// FIXME remove completely
+//	Id								collectionId_;	// FIXME remove completely
 };
 
 #endif	// _DIALOG_H_
