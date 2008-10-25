@@ -286,21 +286,16 @@ QVariant BaseHistoryModel::headerData(int section, Qt::Orientation orientation, 
 QModelIndexList BaseHistoryModel::match(const QModelIndex& start, int role, const QVariant& value, int hits, Qt::MatchFlags flags) const
 {
 	Q_ASSERT((flags == Qt::MatchExactly) || (flags == Qt::MatchContains));
+	Q_UNUSED(hits);
 
 	QModelIndexList res;
 	if((flags == Qt::MatchExactly) && (data(start, role) == value)) {
 		res.append(start);
-		if(hits >= 0) {
-			++hits;
-		}
 	} else if(flags == Qt::MatchContains) {
 		Q_ASSERT(value.canConvert(QVariant::String));
 		QString valueStr = value.toString();
 		if(data(start, role).toString().contains(valueStr)) {
 			res.append(start);
-			if(hits >= 0) {
-				++hits;
-			}
 		}
 	}
 
@@ -312,11 +307,8 @@ QModelIndexList BaseHistoryModel::match(const QModelIndex& start, int role, cons
 		const int cols = child->columnCount();
 		for(int col=0; col<cols; ++col)
 		{
-			if((col > 0) && (role >= Qt::UserRole)) {	// all out custom roles stored in column 0
+			if((col > 0) && (role >= Qt::UserRole)) {	// all our custom roles stored in column 0
 				break;
-			}
-			if((hits >= 0) && (res.count() >= hits)) {
-				return res;
 			}
 			res << match(index(row,col,start), role, value, hits, flags);
 		}
