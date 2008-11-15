@@ -119,7 +119,7 @@ protected slots:
 	void doInfo();
 	virtual void doHistory();
 	virtual void doClear();
-	void doSend();
+	virtual void doSend();
 	void doVoice();
 	void doFile();
 

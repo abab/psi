@@ -579,6 +579,8 @@ bool PsiCon::init()
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
 	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
 
+	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
+
 	return true;
 }
 
@@ -631,6 +633,8 @@ void PsiCon::deinit()
 		d->saveProfile(acc);
 
 	GlobalShortcutManager::clear();
+
+	DesktopUtil::unsetUrlHandler("xmpp");
 }
 
 
@@ -980,6 +984,7 @@ void PsiCon::doOpenUri(const QUrl &uri)
 	// scheme
 	if (uri.scheme() != "xmpp") {
 		QMessageBox::critical(0, tr("Unsupported URI type"), QString("URI (link) type \"%1\" is not supported.").arg(uri.scheme()));
+		return;
 	}
 
 	// authority
@@ -988,6 +993,7 @@ void PsiCon::doOpenUri(const QUrl &uri)
 		pa = d->contactList->defaultAccount();
 		if (!pa) {
 			QMessageBox::critical(0, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
+			return;
 		}
 	//
 	// TODO: finish authority component handling

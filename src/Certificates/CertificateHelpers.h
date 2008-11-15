@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2008  Remko Troncon
+ * Licensed under the GNU GPL license.
+ * See COPYING for details.
+ */
+
 #ifndef CERTUTIL_H
 #define CERTUTIL_H
 
