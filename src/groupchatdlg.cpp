@@ -612,6 +612,9 @@ public:
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	: TabbableWidget(j.bare(), pa, tabManager)
+        // ALEKSI
+        , storage_(pa->storage())
+        , collection_(storage_->newCollection(History::MucCollection, pa->jid(), j, QDateTime::currentDateTime()))
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 		if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )

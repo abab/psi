@@ -77,12 +77,10 @@
 #include "statusdlg.h"
 #include "infodlg.h"
 #include "adduserdlg.h"
-#include "historydlg.h"
 #include "capsmanager.h"
 #include "registrationdlg.h"
 #include "searchdlg.h"
 #include "discodlg.h"
-#include "eventdb.h"
 #include "accountmodifydlg.h"
 #include "passphrasedlg.h"
 #include "voicecaller.h"
@@ -130,6 +128,10 @@
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
+
+// ALEKSI
+#include "history/dialog.h"
+#include "history/backend.h"
 
 #include <QtCrypto>
 
@@ -1014,9 +1016,10 @@ EventQueue *PsiAccount::eventQueue() const
 	return d->eventQueue;
 }
 
-EDB *PsiAccount::edb() const
+// ALEKSI
+History::Storage *PsiAccount::storage() const
 {
-	return d->psi->edb();
+    return d->psi->storage();
 }
 
 PsiCon *PsiAccount::psi() const
@@ -3212,9 +3215,10 @@ void PsiAccount::actionHistory(const Jid &j)
 	HistoryDlg *w = findDialog<HistoryDlg*>(j);
 	if(w)
 		bringToFront(w);
-	else {
-		w = new HistoryDlg(j, this);
-		connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
+        else {
+                // ALEKSI
+                w = new HistoryDlg(this->storage());
+//		connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
 		w->show();
 	}
 }
@@ -4286,15 +4290,10 @@ void PsiAccount::chatMessagesRead(const Jid &j)
 
 void PsiAccount::logEvent(const Jid &j, PsiEvent *e)
 {
-	EDBHandle *h = new EDBHandle(d->psi->edb());
-	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
-	h->append(j, e);
-}
-
-void PsiAccount::edb_finished()
-{
-	EDBHandle *h = (EDBHandle *)sender();
-	delete h;
+    // FIXME ALEKSI logEvent
+//	EDBHandle *h = new EDBHandle(d->psi->edb());
+//	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
+//	h->append(j, e);
 }
 
 void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
