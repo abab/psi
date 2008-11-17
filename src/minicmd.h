@@ -29,6 +29,10 @@ class QString;
 class QStringList;
 class MCmdProviderIface;
 
+/** unparsed state: this is a state where the whole user input is passed
+  * unparsed as the first part to the handler functions
+  */
+#define MCMDSTATE_UNPARSED	1
 
 /** This interface models the methods common to all mini command states.
   */
@@ -41,6 +45,10 @@ public:
 	/** \return the prompt of the state
 	  */
 	virtual QString getPrompt()=0;
+
+	/** \return flags for this state
+	  */
+	virtual int getFlags()=0;
 
 	/** Called when the state is no longer needed to free associated memory.
 	 */
@@ -141,6 +149,9 @@ public:
 	 *  cursor). If the provider needs more context to find the list of
 	 *  possible completions \a partcommand contains the parsed current
 	 *  commandline and \a item indicates which part contains the cursor.
+	 *
+	 * \return a QStringList of all possible completions. If a completion ends with a null char,
+	 *           an unquoted/unescaped space will be added at the end of the completion.
 	 */
 	virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item)=0;
 

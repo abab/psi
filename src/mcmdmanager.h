@@ -35,10 +35,13 @@ class MCmdSimpleState : public QObject, public MCmdStateIface
 	Q_OBJECT
 public:
 	MCmdSimpleState(QString name, QString prompt);
+	MCmdSimpleState(QString name, QString prompt, int flags);
 
 	virtual QString getName() { return name_;};
 
 	virtual QString getPrompt() { return prompt_;};
+
+	virtual int getFlags() { return flags_;};
 
 	virtual const QHash<QString, QVariant> &getInfo() { return info_; };
 
@@ -54,6 +57,7 @@ signals:
 
 protected:
 	QString name_, prompt_;
+	int flags_;
 };
 
 
@@ -75,7 +79,7 @@ public:
 	virtual void registerProvider(MCmdProviderIface *prov);
 
 protected:
-	QStringList parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end);
+	QStringList parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end, char &quotedAtPos);
 	QString serializeCommand(const QStringList &list);
 
 	QList<MCmdProviderIface*> providers_;

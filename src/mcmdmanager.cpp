@@ -28,6 +28,13 @@ MCmdSimpleState::MCmdSimpleState(QString name, QString prompt) {
 	prompt_ = prompt;
 }
 
+MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags) {
+	name_ = name;
+	prompt_ = prompt;
+	flags_ = flags;
+}
+
+
 MCmdSimpleState::~MCmdSimpleState() {
 }
 
@@ -41,7 +48,7 @@ MCmdManager::~MCmdManager() {
 }
 
 
-QStringList MCmdManager::parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end)
+QStringList MCmdManager::parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end, char &quotedAtPos)
 {
 	QStringList list;
 	QString item;
@@ -50,12 +57,14 @@ QStringList MCmdManager::parseCommand(const QString command, int pos, int &part,
 	bool space=true;
 
 	int partStart = 0;
+	quotedAtPos = 0;
 	for (int i=0; i < command.length(); i++) {
 		if (i == pos) {
 			part = list.size();
 			partial = item;
 			end = i;
 			start = partStart;
+			if (quote) quotedAtPos =  (quote == 1) ? '"' : '\'';
 		}
 
 
@@ -94,6 +103,7 @@ QStringList MCmdManager::parseCommand(const QString command, int pos, int &part,
 		partial = item;
 		end = command.length();
 		start = partStart;
+		if (quote) quotedAtPos =  (quote == 1) ? '"' : '\'';
 	}
 
 	if (!space) list << item;
@@ -119,15 +129,29 @@ QString MCmdManager::serializeCommand(const QStringList &list)
 bool MCmdManager::processCommand(QString command) {
 	MCmdStateIface *tmpstate=0;
 	QStringList preset;
-	int tmp_1;
-	QString tmp_2;
-	QStringList items = parseCommand(command, -1, tmp_1, tmp_2, tmp_1, tmp_1);
+	QStringList items;
+	if (state_->getFlags() & MCMDSTATE_UNPARSED) {
+		items << command;
+	} else {
+		int tmp_1;
+		QString tmp_2;
+		char tmp_3;
+		items = parseCommand(command, -1, tmp_1, tmp_2, tmp_1, tmp_1, tmp_3);
+	}
 	foreach(MCmdProviderIface *prov, providers_) {
 		if (prov->mCmdTryStateTransit(state_, items, tmpstate, preset)) {
 			state_ = tmpstate;
 			if (state_ != 0) {
 				QString prompt = state_->getPrompt();
-				uiSite_->mCmdReady(prompt, serializeCommand(preset));
+				QString def;
+				if (state_->getFlags() & MCMDSTATE_UNPARSED) {
+					if (preset.size() == 1) {
+						def = preset.at(0);
+					}
+				} else {
+					def = serializeCommand(preset);
+				}
+				uiSite_->mCmdReady(prompt, def);
 			} else {
 				uiSite_->mCmdClose();
 			}
@@ -151,7 +175,13 @@ bool MCmdManager::open(MCmdStateIface *state, QStringList preset) {
 
 	state_ = state;
 	QString prompt = state->getPrompt();
-	uiSite_->mCmdReady(prompt, serializeCommand(preset));
+	QString def;
+	if (state_->getFlags() & MCMDSTATE_UNPARSED) {
+		if (preset.size() == 1) def = preset.at(0);
+	} else {
+		def = serializeCommand(preset);
+	}
+	uiSite_->mCmdReady(prompt, def);
 	return true;
 }
 
@@ -159,15 +189,41 @@ bool MCmdManager::open(MCmdStateIface *state, QStringList preset) {
 QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, int &end) {
 	int part;
 	QString query;
-	QStringList all = parseCommand(command, pos, part, query, start, end);
+	char quotedAtPos;
+	QStringList all;
+	if (state_->getFlags() & MCMDSTATE_UNPARSED) {
+		all << command;
+		query = command.left(pos);
+		part = -1;
+	} else {
+		all = parseCommand(command, pos, part, query, start, end, quotedAtPos);
+	}
 
 	QStringList res;
 	foreach(MCmdProviderIface *prov, providers_) {
 		res += prov->mCmdTryCompleteCommand(state_, query, all, part);
 	}
 	res.sort();
-	qDebug() << "completeCommand" << res;
-	return res;
+
+	QStringList quoted;
+	if ((state_->getFlags() & MCMDSTATE_UNPARSED) == 0) {
+		foreach(QString str, res) {
+			QString trail;
+			if (str.size() > 1 && str.at(str.size()-1) == QChar(0)) {
+				str.chop(1);
+				trail = " ";
+			}
+			str = str.replace("\\", "\\\\");
+			if (quotedAtPos == 0) {
+				quoted << str.replace(" ", "\\ ").replace("\"", "\\\"").replace("'", "\\'") + trail;
+			} else {
+				quoted << quotedAtPos + str.replace(quotedAtPos, QString("\\") + quotedAtPos) + trail;
+			}
+		}
+	} else {
+		quoted = res;
+	}
+	return quoted;
 }
 
 bool MCmdManager::isActive() {
