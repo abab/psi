@@ -1,5 +1,5 @@
 /*
- * fake_backend.h - FAKE backend for new event-logging system
+ * backend.h - backend for new event-logging system
  * Copyright (C) 2008 Aleksey Palazchenko
  *
  * This program is free software; you can redistribute it and/or
