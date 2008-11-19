@@ -21,6 +21,9 @@
 #ifndef _MODELS_H_
 #define _MODELS_H_
 
+#include "model_historyitem.h"
+#include "model_basehistorymodel.h"
+
 #include <QAbstractItemModel>
 #include <QDateTime>
 #include <QPointer>
@@ -59,117 +62,8 @@ enum HistoryItemRole {
 QString roleToString(int role);
 #endif
 
-/*! QMap of role and data - one cell. */
-typedef QMap<int, QVariant> DataCell;
-
-/*! QList of DataCell - data for one row: all columns and all roles.*/
-typedef QList<DataCell> DataRow;
-
-/*! \brief One item of any history model. */
-class HistoryItem
-{
-	// no Q_OBJECT - pure C++ class
-public:
-	/*! Creates new item. Default parent is \e this.*/
-	HistoryItem(int initialColumnCount = 0);
-	/*! Deletes item and all child items. */
-	~HistoryItem() { qDeleteAll(childItems_); }
-
-	/*! Sets parent for item. \e Parent should be existed item. */
-	void setParent(HistoryItem *parent);
-	/*! Returns parent item. */
-	HistoryItem* parent() const { return parentItem_; }
-
-	/*! Appends existed child to item.*/
-	void appendChild(HistoryItem* child) { childItems_.append(child); }
-	/*! Removes child item.*/
-	void removeChild(HistoryItem* child);
-	/*! Returns child item by row number.*/
-	HistoryItem* child(const int row) const;
-
-	/*! Returns child count.*/
-	int childCount() const { return childItems_.count(); }
-	/*! Returns columns count for this item.*/
-	int columnCount() const { return itemData_.count(); }
-
-	/*! Returns data by column and role.*/
-	QVariant data(const int column, const int role) const;
-	/*! Return data for all roles in this column. */
-	const DataCell& data(const int column) const;
-
-	/*! Adds data with role to column.*/
-	void addData(const int column, const int role, const QVariant &data);
-	/*! Add data to all columns.*/
-	void addDataToRow(const int role, const QVariant &data);
-
-	/*! Returns row of this item in parent.*/
-	int row() const;
-
-#ifdef HISTORY_DEBUG_MODELS
-	void dump() const;
-	void dumpAll() const;
-#endif
-
-private:
-	HistoryItem* parentItem_;
-	QList<HistoryItem*> childItems_;
-	DataRow itemData_;
-};
-
 bool indexLessThan(const QModelIndex& a, const QModelIndex& b);
 
-/*! \brief Base class for all history models. */
-class BaseHistoryModel : public QAbstractItemModel
-{
-	Q_OBJECT
-public:
-	BaseHistoryModel(Storage *storage);
-	virtual ~BaseHistoryModel();
-
-	HistoryItem* itemFromIndex(const QModelIndex& index) const;
-	QModelIndex indexFromItem(HistoryItem* item, int column) const;
-	/*! Column 0 contains user (developer) data - ids, etc. */
-	QModelIndex userDataIndex(const QModelIndex& index) const;
-
-	virtual QModelIndex index(int row, int column, const QModelIndex& parent) const;
-	virtual QModelIndex parent(const QModelIndex& index) const;
-	virtual int rowCount(const QModelIndex& parent) const;
-	virtual int columnCount(const QModelIndex& parent) const;
-	virtual QVariant data(const QModelIndex& index, int role) const;
-	virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-
-	virtual Qt::ItemFlags flags(const QModelIndex &index) const = 0;
- 	virtual bool setData(const QModelIndex &index, const QVariant &value, int role) = 0;
-
-	/*! Recursive search for items.
-	 *  \param start - parent
-	 *  \param flags Allowed flags: Qt::MatchExactly, Qt::MatchContains. Only one flag
-	 *  		is allowed, not more, not less.
-	 */
-	virtual QModelIndexList match(const QModelIndex& start, int role, const QVariant& value, int hits,
-			Qt::MatchFlags flags) const;
-
-#ifdef HISTORY_DEBUG_MODELS
-	QString indexToStr(const QModelIndex&) const;
-	QString flagsToStr(const Qt::ItemFlags&) const;
-	void setDebugTooltips(HistoryItem* parent);
-#endif
-
-public slots:
-	/*! Removes all items.*/
-	virtual void clearModel();
-	/*! Send signal to view to redraw.*/
-	void refreshModel();
-
-protected:
-	QPointer<Storage> storage_;
-	HistoryItem* root_;
-
-private:
-	// disabled
-	BaseHistoryModel(const BaseHistoryModel &);
-	BaseHistoryModel& operator=(const BaseHistoryModel &);
-};
 
 /*! \brief Model for collections. */
 class CollectionsModel : public BaseHistoryModel
