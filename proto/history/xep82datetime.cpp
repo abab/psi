@@ -27,32 +27,31 @@
 
 #include "xep82datetime.h"
 
+#define FORMAT_WITHOUT	"yyyy-MM-ddThh:mm:ssZ"
+#define FORMAT_WITH		"yyyy-MM-ddThh:mm:ss.zzzZ"
+
 bool containsFractionalSeconds(const QString& xepString)
 {
-	bool without	= QDateTime::fromString(xepString, "yyyy-MM-ddThh:mm:ssZ").isValid();
-	bool with		= QDateTime::fromString(xepString, "yyyy-MM-ddThh:mm:ss.zzzZ").isValid();
+	const bool without	= QDateTime::fromString(xepString, FORMAT_WITHOUT).isValid();
+	const bool with		= QDateTime::fromString(xepString, FORMAT_WITH   ).isValid();
 	Q_ASSERT(with != without);
 	return with;
 }
 
 QDateTime xep82FormatToDateTime(const QString& xepString, bool* thereWasFractionalSeconds = 0)
 {
-//	if(xepString.isEmpty()) {
-//		return QDateTime();	// MAYBE remove this?
-//	}
+	bool unused;
+	Q_UNUSED(unused);
+	bool& was = (thereWasFractionalSeconds ? *thereWasFractionalSeconds : unused);
 
-	if(thereWasFractionalSeconds != 0) {
-		*thereWasFractionalSeconds = false;
-	}
-
-	QString format("yyyy-MM-ddThh:mm:ss");
+	QString format;
 	if(containsFractionalSeconds(xepString)) {
-		if(thereWasFractionalSeconds != 0) {
-			*thereWasFractionalSeconds = true;
-		}
-		format += ".zzz";
+		was = true;
+		format = FORMAT_WITH;
+	} else {
+		was = false;
+		format = FORMAT_WITHOUT;
 	}
-	format += "Z";
 
 	QDateTime res = QDateTime::fromString(xepString, format);
 	if(!res.isValid()) {
@@ -64,18 +63,15 @@ QDateTime xep82FormatToDateTime(const QString& xepString, bool* thereWasFraction
 
 QString dateTimeToXep82Format(const QDateTime& dt, const bool withFractionalSeconds)
 {
-//	if(!dt.isValid()) {
-//		return QString();	// MAYBE remove this?
-//	}
-
-	QString format = "yyyy-MM-ddThh:mm:ss";
+	QString format;
 	if(withFractionalSeconds) {
-		format += ".zzz";
-	}
-	QString res = dt.toString(format);
-	if(dt.timeSpec() == Qt::UTC) {
-		res += "Z";
+		format = FORMAT_WITH;
 	} else {
+		format = FORMAT_WITHOUT;
+	}
+
+	const QString res = dt.toString(format);
+	if(dt.timeSpec() != Qt::UTC) {
 		// huh? Another timezone? is it needed?
 		Q_ASSERT_X(false, "No support for timezones yet.", "dateTimeToXep82Format");
 	}
