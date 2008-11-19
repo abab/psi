@@ -18,27 +18,20 @@
  *
  */
 
-#ifndef XEPDATETIME_H
-#define XEPDATETIME_H
-
-#include <QDateTime>
-#include <QString>
-#include <QDebug>
-
 #include "xep82datetime.h"
 
-#define FORMAT_WITHOUT	"yyyy-MM-ddThh:mm:ssZ"
-#define FORMAT_WITH		"yyyy-MM-ddThh:mm:ss.zzzZ"
+#define XEP82_FORMAT_WITHOUT	"yyyy-MM-ddThh:mm:ssZ"
+#define XEP82_FORMAT_WITH		"yyyy-MM-ddThh:mm:ss.zzzZ"
 
 bool containsFractionalSeconds(const QString& xepString)
 {
-	const bool without	= QDateTime::fromString(xepString, FORMAT_WITHOUT).isValid();
-	const bool with		= QDateTime::fromString(xepString, FORMAT_WITH   ).isValid();
+	const bool without	= QDateTime::fromString(xepString, XEP82_FORMAT_WITHOUT).isValid();
+	const bool with		= QDateTime::fromString(xepString, XEP82_FORMAT_WITH   ).isValid();
 	Q_ASSERT(with != without);
 	return with;
 }
 
-QDateTime xep82FormatToDateTime(const QString& xepString, bool* thereWasFractionalSeconds = 0)
+QDateTime xep82FormatToDateTime(const QString& xepString, bool* thereWasFractionalSeconds)
 {
 	bool unused;
 	Q_UNUSED(unused);
@@ -47,10 +40,10 @@ QDateTime xep82FormatToDateTime(const QString& xepString, bool* thereWasFraction
 	QString format;
 	if(containsFractionalSeconds(xepString)) {
 		was = true;
-		format = FORMAT_WITH;
+		format = XEP82_FORMAT_WITH;
 	} else {
 		was = false;
-		format = FORMAT_WITHOUT;
+		format = XEP82_FORMAT_WITHOUT;
 	}
 
 	QDateTime res = QDateTime::fromString(xepString, format);
@@ -65,9 +58,9 @@ QString dateTimeToXep82Format(const QDateTime& dt, const bool withFractionalSeco
 {
 	QString format;
 	if(withFractionalSeconds) {
-		format = FORMAT_WITH;
+		format = XEP82_FORMAT_WITH;
 	} else {
-		format = FORMAT_WITHOUT;
+		format = XEP82_FORMAT_WITHOUT;
 	}
 
 	const QString res = dt.toString(format);
@@ -77,5 +70,3 @@ QString dateTimeToXep82Format(const QDateTime& dt, const bool withFractionalSeco
 	}
 	return res;
 }
-
-#endif	// XEPDATETIME_H
