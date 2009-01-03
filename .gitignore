@@ -51,3 +51,11 @@ checker
 .project
 .cproject
 Makefile
+
+# by Qt Creator
+psi.pro.user
+qtc-gdbmacros/
+
+# history proto
+proto/proto.pro.user
+proto/qtc-gdbmacros/
