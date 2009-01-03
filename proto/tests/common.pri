@@ -8,6 +8,7 @@ RCC_DIR     = _build
 
 QT += testlib sql
 CONFIG += debug warn_on
+CONFIG -= app_bundle
 TEMPLATE = app
 INCLUDEPATH += $$PWD/../history
 
