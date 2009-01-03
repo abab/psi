@@ -168,23 +168,6 @@ EntryInfo::EntryInfo(const Id entryId, const Id collectionId, const EntryType ty
 {
 }
 
-EntryInfo::EntryInfo(const EntryInfo& other)
-{
-	operator=(other);
-}
-
-EntryInfo& EntryInfo::operator=(const EntryInfo& entry)
-{
-	this->id_           = entry.id_;
-	this->collectionId_ = entry.collectionId_;
-	this->type_         = entry.type_;
-	this->jid_          = entry.jid_;
-	this->nickname_     = entry.nickname_;
-	this->body_         = entry.body_;
-	this->utc_          = entry.utc_;
-	return *this;
-}
-
 Id EntryInfo::id() const
 {
 	return id_;
@@ -230,22 +213,6 @@ CollectionInfo::CollectionInfo(const Id collectionId, const CollectionType type,
 : id_(collectionId), type_(type), ownerJid_(ownerJid), contactJid_(contactJid),
 	subject_(subject), start_(start)
 {
-}
-
-CollectionInfo::CollectionInfo(const CollectionInfo& other)
-{
-	operator=(other);
-}
-
-CollectionInfo& CollectionInfo::operator=(const CollectionInfo& other)
-{
-	this->id_			= other.id_;
-	this->type_			= other.type_;
-	this->contactJid_	= other.contactJid_;
-	this->ownerJid_		= other.ownerJid_;
-	this->subject_		= other.subject_;
-	this->start_		= other.start_;
-	return *this;
 }
 
 Id CollectionInfo::id() const

@@ -109,8 +109,7 @@ class EntryInfo
 	friend class Storage;
 
 public:
-	EntryInfo(const EntryInfo& other);
-	EntryInfo& operator=(const EntryInfo& other);
+	// default copy constructor and assigment operator are ok
 
 	/*! Primary key at database. */
 	Id id() const;
@@ -168,8 +167,7 @@ class CollectionInfo
 	friend class Storage;
 
 public:
-	CollectionInfo(const CollectionInfo& collection);
-	CollectionInfo& operator=(const CollectionInfo& collection);
+	// default copy constructor and assigment operator are ok
 
 	/*! Primary key at database. */
 	Id id() const;
