@@ -1,6 +1,6 @@
 /*
  * model_basehistorymodel.h - base model for history
- * Copyright (C) 2008 Aleksey Palazchenko
+ * Copyright (C) 2008 Aleksey Palazhchenko
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

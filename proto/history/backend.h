@@ -1,6 +1,6 @@
 /*
  * backend.h - backend for new event-logging system
- * Copyright (C) 2008 Aleksey Palazchenko
+ * Copyright (C) 2008 Aleksey Palazhchenko
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@
 
 /*! \namespace History
  *  \brief Namespace of new event-logging system.
- *  \author Aleksey Palazchenko
+ *  \author Aleksey Palazhchenko
  *  \version 1.0
  *  \date Google's Summer of Code 2008 and later
  */

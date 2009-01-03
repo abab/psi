@@ -1,6 +1,6 @@
 /*
  * xep82datetime.cpp - functions for date/time conversions according to XEP-82
- * Copyright (C) 2008 Aleksey Palazchenko
+ * Copyright (C) 2008 Aleksey Palazhchenko
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
