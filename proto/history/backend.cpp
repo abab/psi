@@ -21,118 +21,39 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlRecord>
+#include <QDebug>
 
 #include "backend.h"
 #include "xep82datetime.h"
 using namespace History;
 
-const char SQLiteWrapper::initConnection[] = ""
-        //"PRAGMA locking_mode = EXCLUSIVE;"	// requires attention - only one connection can exists
-        "PRAGMA locking_mode = NORMAL;"			// LATER Useful for debug, remove later.
-        "PRAGMA synchronous = OFF"				// _MUCH_ faster, but little bit unsafe
-        ;
-
-const char SQLiteWrapper::createTables[] =
-	"PRAGMA encoding = \"UTF-8\";"	// smaller
-	"BEGIN;"
-
-	"CREATE TABLE collections (\n"
-	"	collection_id	INTEGER		NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
-	"	ownerjid		TEXT,\n"
-	"	contactjid		TEXT,\n"
-	"	type			INTEGER,\n"
-	"	start			TEXT,\n"
-	"	subject			TEXT\n"
-	");"
-
-	"CREATE INDEX owner_i		ON collections ( ownerjid );"
-	"CREATE INDEX contactjid_i	ON collections ( contactjid );"
-	"CREATE INDEX start_i		ON collections ( start );"
-
-	"CREATE TABLE entries (\n"
-	"	entry_id		INTEGER		NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
-	"	collection_id	INTEGER		NOT NULL,\n"
-	"	type			INTEGER,\n"
-	"	jid				TEXT,\n"
-	"	nick			TEXT,\n"
-	"	utc				TEXT,\n"
-	"	body			TEXT\n"
-	");"
-
-	"CREATE INDEX collection_id_i ON entries ( collection_id );"
-	"CREATE INDEX utc_i           ON entries ( utc );"
-
-	// SQLite does not create sequences for new (empty) tables. It's bad.
-	"INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'entries'    , 0 );"
-	"INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'collections', 0 );"
-
-	"CREATE VIEW next_entry_id      AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='entries'     LIMIT 1;"
-	"CREATE VIEW next_collection_id AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='collections' LIMIT 1;"
-
-	"COMMIT;";
-
-const char SQLiteWrapper::maintanceTables[] = "VACUUM;ANALYZE;";
-QStringList SQLiteWrapper::usedDatabases = QStringList();
-int SQLiteWrapper::connectionNumber = 0;
-
-SQLiteWrapper* SQLiteWrapper::getNewConnection(const QString& databaseName)
+SQLiteWrapper::SQLiteWrapper(const QString& databaseName)
 {
-	if(usedDatabases.contains(databaseName)) {
-		Q_ASSERT_X(false, "SQLiteWrapper::getNewConnection()",
-			qPrintable(QString("%1 - already used!").arg(databaseName)));
-		return 0;
-	}
-	usedDatabases.append(databaseName);
+	db_ = QSqlDatabase::addDatabase("QSQLITE", "PsiConnection_" + databaseName + QString::number(qrand()));
+	db_.setDatabaseName(databaseName);
+	const bool opened = db_.open();
+	Q_ASSERT(opened);
 
-	// new wrapper, new connection
-	SQLiteWrapper *wr = new SQLiteWrapper;
-	wr->connectionName_ = "PsiConnection_" + databaseName + "_" + QString::number(++connectionNumber);
-	wr->db_ = QSqlDatabase::addDatabase("QSQLITE", wr->connectionName_);
-	wr->db_.setDatabaseName(databaseName);
-	wr->databaseName_ = databaseName;
-
-	// init connection
-	if(!wr->db_.open()) {
-		closeConnection(wr);
-		Q_ASSERT_X(false, "SQLiteWrapper::getNewConnection()",
-			qPrintable(QString("%1 - can't open database!").arg(databaseName)));
-		return 0;
-	}
-
-	QStringList list = QString(initConnection).split(";");
-	foreach(QString str, list) {
-		wr->exec(str);
-	}
-
-	wr->createSchemaIfNeeded();
-	wr->tablesMaintainance();
-	return wr;
+	initConnection();
+	createSchemaIfNeeded();
+	tablesMaintainance();
 }
 
-void SQLiteWrapper::closeConnection(SQLiteWrapper* wrapper)
+SQLiteWrapper::~SQLiteWrapper()
 {
-	if (usedDatabases.contains(wrapper->databaseName_)) {
-
-		if (wrapper->connected()) {
-			wrapper->db_.close();
-		}
-
-		QString connectionName = wrapper->connectionName_;
-		usedDatabases.removeAll(wrapper->databaseName_);
-		delete wrapper;
-		QSqlDatabase::removeDatabase(connectionName);
-	}
+	const QString connectionName = db_.connectionName();
+	db_.close();
+	QSqlDatabase::removeDatabase(connectionName);
 }
 
 QSqlQuery SQLiteWrapper::exec(const QString& query, const BindedValues& values, const bool mayFail) const
 {
+	Q_ASSERT(db_.isOpen());
+	Q_ASSERT(!query.isEmpty());
 	QSqlQuery q(db_);
-	if (query.isEmpty() || !connected()) {
-		return q;
-	}
 
 #ifdef HISTORY_DEBUG_BACKEND
-	QTime start = QTime::currentTime();
+	const QTime start = QTime::currentTime();
 #endif
 
 	q.prepare(query);
@@ -143,8 +64,8 @@ QSqlQuery SQLiteWrapper::exec(const QString& query, const BindedValues& values, 
 	}
 
 	q.exec();
-	if (q.lastError().isValid() && !mayFail) {
-		QSqlError err = q.lastError();
+	if (! (q.isActive() || mayFail)) {
+		const QSqlError err = q.lastError();
 		qCritical("\n ------------- SQLiteWrapper::exec error ------------- ");
 		qCritical() << q.lastQuery();
 		qCritical() << values;
@@ -173,28 +94,67 @@ QSqlQuery SQLiteWrapper::exec(const QueryWithValues& qwv, const bool mayFail) co
 	return exec(qwv.query, qwv.values, mayFail);
 }
 
+void SQLiteWrapper::initConnection() const
+{
+#ifdef HISTORY_DEBUG_BACKEND
+	// we can use sqlite3 for deep view
+	exec("PRAGMA locking_mode = NORMAL;");
+#else
+	exec("PRAGMA locking_mode = EXCLUSIVE;");
+#endif
+	exec("PRAGMA synchronous = OFF");
+}
+
 void SQLiteWrapper::createSchemaIfNeeded() const
 {
-	// needed?
-	QSqlQuery q = exec("SELECT * FROM collections LIMIT 1", BindedValues(), true);
+	QSqlQuery q = exec(QueryWithValues("SELECT * FROM collections LIMIT 1"), true);
 	if (! q.isActive()) {
-		QStringList list = QString(createTables).split(";");
-		foreach(QString str, list) {
-			exec(str);
-		}
+		exec("PRAGMA encoding = \"UTF-8\"");
+		exec("BEGIN");
+
+		// collections
+		exec("CREATE TABLE collections (\n"
+				"collection_id	INTEGER		NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
+				"ownerjid		TEXT,\n"
+				"contactjid		TEXT,\n"
+				"type			INTEGER,\n"
+				"start			TEXT,\n"
+				"subject		TEXT\n"
+			")");
+		exec("CREATE INDEX owner_i		ON collections ( ownerjid )");
+		exec("CREATE INDEX contactjid_i	ON collections ( contactjid )");
+		exec("CREATE INDEX start_i		ON collections ( start )");
+
+		// entries
+		exec("CREATE TABLE entries (\n"
+				"entry_id		INTEGER		NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
+				"collection_id	INTEGER		NOT NULL,\n"
+				"type			INTEGER,\n"
+				"jid			TEXT,\n"
+				"nick			TEXT,\n"
+				"utc			TEXT,\n"
+				"body			TEXT\n"
+			")");
+		exec("CREATE INDEX collection_id_i ON entries ( collection_id )");
+		exec("CREATE INDEX utc_i           ON entries ( utc )");
+
+		// SQLite does not create sequences for new (empty) tables. It's bad.
+		// MAYBE better workaround?
+		exec("INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'entries'    , 0 )");
+		exec("INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'collections', 0 )");
+		exec("CREATE VIEW next_entry_id      AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='entries'     LIMIT 1");
+		exec("CREATE VIEW next_collection_id AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='collections' LIMIT 1");
+
+		exec("COMMIT");
 	} else {
-		// fetch row
-		q.first();
-		q.next();
+		q.finish();
 	}
 }
 
 void SQLiteWrapper::tablesMaintainance() const
 {
-	QStringList list = QString(maintanceTables).split(";");
-	foreach(QString str, list) {
-		exec(str);
-	}
+	exec("VACUUM");
+	exec("ANALYZE");
 }
 
 
@@ -321,26 +281,32 @@ QString CollectionInfo::subject() const
 
 // --------------------------Storage------------------------------------------
 
+QPointer<Storage> Storage::instance_ = 0;
+SQLiteWrapper* Storage::wrapper_ = 0;
 
-Storage* Storage::getStorage(const QString& filename)
+Storage* Storage::getStorage(const QString& databaseName)
 {
-	SQLiteWrapper *wrapper = SQLiteWrapper::getNewConnection(filename);
-	if(!wrapper) {
-		Q_ASSERT_X(false, "Storage::getStorage()",
-			qPrintable(QString("%1 - NO new storage").arg(filename)));
-		return 0;
-	}
-	return (new Storage(wrapper));
+	Q_ASSERT(!instance_);
+	instance_ = new Storage(databaseName);
+	return instance_;
 }
 
-Storage::Storage(SQLiteWrapper* wrapper) : wrapper_(wrapper)
+Storage* Storage::getStorage()
 {
-	Q_ASSERT_X(wrapper, "Storage::Storage()", "wrapper is NULL");
+	Q_ASSERT(instance_);
+	return instance_;
+}
+
+Storage::Storage(const QString& databaseName)
+{
+	wrapper_ = new SQLiteWrapper(databaseName);
+	Q_ASSERT(wrapper_);
 }
 
 Storage::~Storage()
 {
-	SQLiteWrapper::closeConnection(wrapper_);
+	delete wrapper_;
+	wrapper_ = 0;
 }
 
 EntryInfo Storage::newEntry(const Id collectionId, const EntryType type, const XMPP::Jid& jid,
@@ -399,7 +365,7 @@ EntryInfo Storage::entryById(const Id entryId)
 	} else {
 		qCritical() << entryId;
 		Q_ASSERT_X(false, "Can't find entry", "Storage::entryById");
-		return EntryInfo();
+		return EntryInfo(-1, -1, SystemMessageEntry, XMPP::Jid(), QString(), QString(), QDateTime());	// we should die there
 	}
 }
 
@@ -509,7 +475,7 @@ CollectionInfo Storage::collectionById(const Id collectionId)
 	} else {
 		qCritical() << collectionId;
 		Q_ASSERT_X(false, "Can't find collection", "Storage::collectionById");
-		return CollectionInfo();
+		return CollectionInfo(-1, ChatCollection, XMPP::Jid(), XMPP::Jid(), QString(), QDateTime());	// we should die there
 	}
 }
 

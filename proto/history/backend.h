@@ -25,7 +25,6 @@
 #include <QVariant>
 #include <QDateTime>
 #include <QStringList>
-#include <QDebug>
 #include <QPointer>
 
 #include <xmpp_jid.h>
@@ -63,67 +62,39 @@ class Storage;
  *
  *  No public interface. Class is used by friend: Storage.
  */
-class SQLiteWrapper : public QObject
+class SQLiteWrapper
 {
-	Q_OBJECT
+	// no Q_OBJECT - pure C++ class
+	Q_DISABLE_COPY(SQLiteWrapper)
 	friend class Storage;
 
 private:
-	/*! Creates new connection.
-	 *  \param databaseName - file name of database.
-	 *  \return Valid pointer or 0.
-	 */
-	static SQLiteWrapper* getNewConnection(const QString& databaseName);
-
-	/*! Closes connection.
-	 *  \param wrapper - pointer to wrapper.
-	 */
-	static void closeConnection(SQLiteWrapper* wrapper);
-
-	/*! Empty constructor. Use getNewConnection() instead.*/
-	SQLiteWrapper() { }
-	/*! Empty destructor. Use closeConnection() instead.*/
-	virtual ~SQLiteWrapper(){ }
-
-	// disabled
-	SQLiteWrapper(const SQLiteWrapper&);
-	SQLiteWrapper& operator=(const SQLiteWrapper&);
-
-	/*! Are we still connected with database? */
-	bool connected() const {
-		return db_.isOpen();
-	}
+	SQLiteWrapper(const QString& databaseName);
+	~SQLiteWrapper();
 
 	/*! Executes SQL query.
 	 *  \param query - query with placeholders for values.
 	 *  \param values - pairs placeholder/value.
-	 *  \param mayFail - true, if it's ok for query to fail. It query fails, and mayFail is false,
-	 *  it will be reported to console.
+	 *  \param mayFail - true, if it's ok for query to fail.
 	 */
 	QSqlQuery exec(const QString& query, const BindedValues& values=BindedValues(), const bool mayFail=false) const;
 	QSqlQuery exec(const QueryWithValues& qwv, const bool mayFail=false) const;
 
+	/*! Low-level stuff: locking_mode, synchronous, etc.*/
+	void initConnection() const;
 	/*! Creates tables, views, etc if needed.*/
 	void createSchemaIfNeeded() const;
 	/*! VACUUM and ANALYZE.*/
 	void tablesMaintainance() const;
 
+private:
 	QSqlDatabase db_;
-	QString databaseName_;
-	QString connectionName_;
-
-	static QStringList usedDatabases;
-	static int connectionNumber;
-	static const char initConnection[];
-	static const char createTables[];
-	static const char maintanceTables[];
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 /*! Type of entry. */
 enum EntryType {
-//	UnknownEntry			= 1,	/*< Unknown/invalid type. */
 	SentMessageEntry		= 2,	/*!< Message from user (owner). */
 	ReceivedMessageEntry	= 3,	/*!< Message to user (owner). */
 	SystemMessageEntry		= 4,	/*!< System message. */
@@ -135,14 +106,16 @@ enum EntryType {
 class EntryInfo
 {
 	// no Q_OBJECT - pure C++ class
+	friend class Storage;
+
 public:
 	EntryInfo(const EntryInfo& other);
 	EntryInfo& operator=(const EntryInfo& other);
 
-	/*! Primary key at database or -1 if entry isn't into DB. */
+	/*! Primary key at database. */
 	Id id() const;
 
-	/*! Returns a collection's id or -1 if entry is not assigned to collection. */
+	/*! Returns a collection's id. */
 	Id collectionId() const;
 
 	/*! Returns type of message. */
@@ -158,16 +131,13 @@ public:
 
 	QString contactNickname() const;
 
-	friend class Storage;
-	friend class ArchiveTask;
-
 private:
-	/*! Private constructors used by Storage. */
-	EntryInfo() : id_(-1), collectionId_(-1) { }
+	/*! Private constructor used by Storage. */
 	EntryInfo(const Id entryId, const Id collectionId, const EntryType type,
 			const XMPP::Jid& jid, const QString& nickname,
 			const QString& body, const QDateTime& utc);
 
+private:
 	Id id_;
 	Id collectionId_;
 	EntryType type_;
@@ -195,11 +165,13 @@ enum CollectionType {
 class CollectionInfo
 {
 	// no Q_OBJECT - pure C++ class
+	friend class Storage;
+
 public:
 	CollectionInfo(const CollectionInfo& collection);
 	CollectionInfo& operator=(const CollectionInfo& collection);
 
-	/*! Primary key at database or -1 if collection isn't in DB. */
+	/*! Primary key at database. */
 	Id id() const;
 
 	/*! Returns contacts's JID. */
@@ -217,16 +189,13 @@ public:
 	/*! Returns subject of collection. */
 	QString subject() const;
 
-	friend class Storage;
-	friend class ArchiveTask;
-
 private:
-	/*! Private constructors used by Storage. */
-	CollectionInfo() : id_(-1) { }
+	/*! Private constructor used by Storage. */
 	CollectionInfo(const Id collectionId, const CollectionType type,
 				const XMPP::Jid& ownerJid, const XMPP::Jid& contactJid,
 				const QString& subject, const QDateTime& start);
 
+private:
 	Id id_;
 	CollectionType type_;
 	XMPP::Jid ownerJid_;
@@ -238,18 +207,23 @@ private:
 /*! QList of collections. */
 typedef QList<CollectionInfo> CollectionsInfo;
 
+// LATER move this to Iris?
 typedef QList<XMPP::Jid> JidList;
 
-/*! \brief Place to store collections, messages and bookmarks. */
+
+/*! \brief Place to store collections, messages and bookmarks.*/
 class Storage : public QObject
 {
 	Q_OBJECT
+	Q_DISABLE_COPY(Storage)
+
 public:
-	/*! Returns existed storage or creates new.
-	 *  \param filename - file name of database.
-	 *  \return Pointer to storage or 0.
+	/*! Creates new storage.
+	 *  \return Pointer to new storage.
 	 */
-	static Storage* getStorage(const QString& filename);
+	static Storage* getStorage(const QString& databaseName);
+	/*! Returns existed storage. */
+	static Storage* getStorage();
 	virtual ~Storage();
 
 	/*! Creates new entry.
@@ -298,28 +272,13 @@ public:
 
 private:
 	/*! Private constructor. Used by getStorage(). */
-	Storage(SQLiteWrapper* wrapper);
+	Storage(const QString& databaseName);
 
-	QPointer<SQLiteWrapper> wrapper_;
-
-	// disabled
-	Storage(const Storage&);
-	Storage& operator=(const Storage&);
+private:
+	static QPointer<Storage> instance_;
+	static SQLiteWrapper* wrapper_;
 };
 
 } // namespace
-
-/*
-static QDebug operator<<(QDebug d, const History::EntryInfo& entry)
-{
-	return d << "EntryInfo (" << entry.id() << entry.collectionId() << entry.contactJid()
-		<< entry.contactNickname() << entry.utc() << entry.body() << ")";
-}
-
-static QDebug operator<<(QDebug d, const History::CollectionInfo& col)
-{
-	return d << "CollectionInfo (" << col.id() << col.ownerJid() << col.contactJid() << col.start() << col.subject() << ")";
-}
-*/
 
 #endif // _BACKEND_H_
