@@ -21,7 +21,6 @@
 #include <QIcon>
 
 #include "models.h"
-#include "meta.h"
 using namespace History;
 
 #ifdef HISTORY_DEBUG_MODELS

@@ -24,7 +24,6 @@
 
 #include "backend.h"
 #include "xep82datetime.h"
-#include "meta.h"
 using namespace History;
 
 const char SQLiteWrapper::initConnection[] = ""

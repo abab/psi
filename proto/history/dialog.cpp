@@ -25,7 +25,6 @@
 #include "backend.h"
 #include "xep82datetime.h"
 #include "dialog.h"
-#include "meta.h"
 
 HistoryDlg::HistoryDlg(Storage* storage /*, XMPP::Task* rootTask*/)
 	: QWidget(0), storage_(storage) //, rootTask_(rootTask), collectionId_(-1)

@@ -29,7 +29,6 @@
 #include <QPointer>
 
 #include <xmpp_jid.h>
-#include "meta.h"
 
 /*! \namespace History
  *  \brief Namespace of new event-logging system.

@@ -3,8 +3,6 @@ DEFINES += HISTORY_DEBUG_MODELS
 
 RESOURCES += $$PWD/icons.qrc
 
-HEADERS += $$PWD/meta.h
-
 FORMS += $$PWD/dialog.ui
 
 HEADERS += $$PWD/backend.h \ 
