@@ -238,8 +238,6 @@ public:
 	EntryInfo newEntry(const Id collectionId, const EntryType type, const XMPP::Jid& jid,
 						const QString& nickname, const QString& body, const QDateTime& dt);
 
-	EntryInfo newEntry(const Id collectionId, const EntryInfo& entry);
-
 	/*! Returns entry with specified id.*/
 	EntryInfo entryById(const Id entryId);
 
@@ -255,8 +253,6 @@ public:
 	/*! Creates new collection. */
 	CollectionInfo newCollection(const CollectionType type, const XMPP::Jid& ownerJid,
 								  const XMPP::Jid& contactJid, const QDateTime& start);
-
-	CollectionInfo newCollection(const CollectionInfo& col);
 
 	/*! Returns collection with specified id.*/
 	CollectionInfo collectionById(const Id collectionId);

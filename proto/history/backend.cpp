@@ -29,7 +29,7 @@ using namespace History;
 
 SQLiteWrapper::SQLiteWrapper(const QString& databaseName)
 {
-	db_ = QSqlDatabase::addDatabase("QSQLITE", "PsiConnection_" + databaseName + QString::number(qrand()));
+	db_ = QSqlDatabase::addDatabase("QSQLITE", "PsiConnection_" + databaseName + "_" + QString::number(qrand()));
 	db_.setDatabaseName(databaseName);
 	const bool opened = db_.open();
 	Q_ASSERT(opened);
@@ -333,15 +333,6 @@ EntryInfo Storage::newEntry(const Id collectionId, const EntryType type, const X
 	return entry;
 }
 
-EntryInfo Storage::newEntry(const Id collectionId, const EntryInfo& entry)
-{
-	Q_ASSERT(entry.id() == -1);
-	Q_ASSERT(entry.collectionId() == -1);
-	Q_ASSERT(collectionId > 0);
-	return newEntry(collectionId, entry.type(), entry.contactJid(), entry.contactNickname(),
-			entry.body(), entry.utc());
-}
-
 EntryInfo Storage::entryById(const Id entryId)
 {
 	QString query("SELECT entry_id, collection_id, type, jid, nick, body, utc FROM entries "
@@ -444,12 +435,6 @@ CollectionInfo Storage::newCollection(const CollectionType type, const XMPP::Jid
 	wrapper_->exec(query, values);
 
 	return col;
-}
-
-CollectionInfo Storage::newCollection(const CollectionInfo& col)
-{
-	Q_ASSERT(col.id() == -1);
-	return newCollection(col.type(), col.ownerJid(), col.contactJid(), col.start());
 }
 
 CollectionInfo Storage::collectionById(const Id collectionId)
