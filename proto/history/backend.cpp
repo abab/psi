@@ -156,9 +156,12 @@ QSqlQuery SQLiteWrapper::exec(const QString& query, const BindedValues& values, 
 	}
 
 #ifdef HISTORY_DEBUG_BACKEND
-	qDebug("[%ds]\t%s", start.secsTo(QTime::currentTime()), qPrintable(query + ";"));
-	if(!values.isEmpty()) {
-		qDebug() << values;
+	const int secs = start.secsTo(QTime::currentTime());
+	if(secs > 0) {
+		qDebug("[%ds]\t%s", start.secsTo(QTime::currentTime()), qPrintable(query + ";"));
+		if(!values.isEmpty()) {
+			qDebug() << values;
+		}
 	}
 #endif
 
