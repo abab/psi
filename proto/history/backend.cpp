@@ -163,7 +163,7 @@ EntryInfo::EntryInfo(const Id entryId, const Id collectionId, const EntryType ty
 {
 }
 
-bool EntryInfo::operator==(const EntryInfo& right)
+bool EntryInfo::operator==(const EntryInfo& right) const
 {
 	return (id()				== right.id() &&
 			collectionId()		== right.collectionId() &&
@@ -221,7 +221,7 @@ CollectionInfo::CollectionInfo(const Id collectionId, const CollectionType type,
 {
 }
 
-bool CollectionInfo::operator==(const CollectionInfo& right)
+bool CollectionInfo::operator==(const CollectionInfo& right) const
 {
 	return (id()				== right.id() &&
 			contactJid()		== right.contactJid() &&

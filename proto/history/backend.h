@@ -102,7 +102,7 @@ class EntryInfo
 public:
 	// default copy constructor and assigment operator are ok
 
-	bool operator==(const EntryInfo& right);
+	bool operator==(const EntryInfo& right) const;
 
 	/*! Primary key at database. */
 	Id id() const;
@@ -162,7 +162,7 @@ class CollectionInfo
 public:
 	// default copy constructor and assigment operator are ok
 
-	bool operator==(const CollectionInfo& right);
+	bool operator==(const CollectionInfo& right) const;
 
 	/*! Primary key at database. */
 	Id id() const;

@@ -32,14 +32,15 @@ private:
 	static const int entriesCount_;
 };
 
-const int BackendTest::collectionsCount_ = 50;
-const int BackendTest::entriesCount_ = 100;
+const int BackendTest::collectionsCount_ = 5;
+const int BackendTest::entriesCount_ = 10;
 
 void BackendTest::initTestCase()
 {
 	QFile::remove("test.db");
 	storage_ = Storage::getStorage("test.db");
 	QVERIFY2(storage_, "Can't create database test.db");
+	QVERIFY(storage_ = Storage::getStorage());
 }
 
 void BackendTest::cleanupTestCase()
@@ -49,31 +50,33 @@ void BackendTest::cleanupTestCase()
 
 void BackendTest::fillDatabase()
 {
-	qDebug() << "Filling database with" << collectionsCount_ << "collections with" << entriesCount_ << "entries each...";
+	qDebug() << "Filling/testing database with" << collectionsCount_ << "collections with" << entriesCount_ << "entries each...";
 
 	QDateTime t = QDateTime::currentDateTime();
-	QDateTime start(QDateTime::currentDateTime());
+	const QDateTime start(QDateTime::currentDateTime());
 	for(int i=0; i<collectionsCount_; ++i) {
-		XMPP::Jid contact( QString("node%1@contact.com").arg(i) );
-		CollectionInfo collection = storage_->newCollection(ChatCollection, XMPP::Jid("test@owner.com"), contact, t);
-		storage_->setCollectionSubject(collection.id(), QString("Subject-") + QString::number(i));
+		const XMPP::Jid contact( QString("node%1@contact.com").arg(i) );
+		const QString subject = QString("Subject-%1").arg(i);
+		const CollectionInfo col = storage_->newCollection(ChatCollection, XMPP::Jid("test@owner.com"), contact, t);
+		QVERIFY(col == storage_->collectionById(col.id()));
+		storage_->setCollectionSubject(collection.id(), subject);
+		QVERIFY(subject == storage_->collectionById(col.id()).subject());
 		for(int j=0; j<entriesCount_; ++j) {
 			const QString body = QString("Body %1-%2").arg(i).arg(j);
 			storage_->newEntry(collection.id(), NoteEntry, contact, "node", body, t);
 			t.addSecs(1);
 		}
-		t.addSecs(1);
+		t.addSecs(10);
 	}
 	qDebug() << start.secsTo(QDateTime::currentDateTime()) << "seconds";
 }
 
 void BackendTest::basicIntegrity()
 {
-	CollectionsInfo cols = storage_->collections();
+	const CollectionsInfo cols = storage_->collections();
 	QVERIFY(cols.count() == collectionsCount_);
 
-	for(int i=0; i<cols.count(); ++i) {
-		CollectionInfo col = cols[i];
+	foreach(const CollectionInfo& col, cols) {
 		QVERIFY(col.id() > 0);
 
 		QVERIFY(col.contactJid().bare().contains("@contact.com"));
