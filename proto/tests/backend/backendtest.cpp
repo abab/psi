@@ -32,15 +32,15 @@ private:
 	static const int entriesCount_;
 };
 
-const int BackendTest::collectionsCount_ = 5;
-const int BackendTest::entriesCount_ = 10;
+const int BackendTest::collectionsCount_ = 50;
+const int BackendTest::entriesCount_ = 100;
 
 void BackendTest::initTestCase()
 {
 	QFile::remove("test.db");
 	storage_ = Storage::getStorage("test.db");
 	QVERIFY2(storage_, "Can't create database test.db");
-	QVERIFY(storage_ = Storage::getStorage());
+	QVERIFY(storage_ == Storage::getStorage());
 }
 
 void BackendTest::cleanupTestCase()
@@ -59,11 +59,12 @@ void BackendTest::fillDatabase()
 		const QString subject = QString("Subject-%1").arg(i);
 		const CollectionInfo col = storage_->newCollection(ChatCollection, XMPP::Jid("test@owner.com"), contact, t);
 		QVERIFY(col == storage_->collectionById(col.id()));
-		storage_->setCollectionSubject(collection.id(), subject);
+		storage_->setCollectionSubject(col.id(), subject);
 		QVERIFY(subject == storage_->collectionById(col.id()).subject());
 		for(int j=0; j<entriesCount_; ++j) {
 			const QString body = QString("Body %1-%2").arg(i).arg(j);
-			storage_->newEntry(collection.id(), NoteEntry, contact, "node", body, t);
+			const EntryInfo entry = storage_->newEntry(col.id(), NoteEntry, contact, "node", body, t);
+			QVERIFY(entry == storage_->entryById(entry.id()));
 			t.addSecs(1);
 		}
 		t.addSecs(10);
@@ -86,10 +87,9 @@ void BackendTest::basicIntegrity()
 
 		QVERIFY(col.id() == (storage_->collectionById(col.id())).id());
 
-		EntriesInfo entries = storage_->entriesByCollectionId(col.id());
+		const EntriesInfo entries = storage_->entriesByCollectionId(col.id());
 		QVERIFY(entries.count() == entriesCount_);
-		for(int j=0; j<entries.count(); ++j) {
-			EntryInfo entry = entries[i];
+		foreach(const EntryInfo& entry, entries) {
 			QVERIFY(entry.id() > 0);
 
 			QVERIFY(entry.collectionId() == col.id());
