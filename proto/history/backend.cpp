@@ -130,15 +130,15 @@ void SQLiteWrapper::createSchemaIfNeeded() const
 				"utc			TEXT,\n"
 				"body			TEXT\n"
 			")");
-		exec("CREATE INDEX collection_id_i ON entries ( collection_id )");
-		exec("CREATE INDEX utc_i           ON entries ( utc )");
+		exec("CREATE INDEX collection_id_i	ON entries ( collection_id )");
+		exec("CREATE INDEX utc_i			ON entries ( utc )");
 
 		// SQLite does not create sequences for new (empty) tables. It's bad.
 		// MAYBE better workaround?
-		exec("INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'entries'    , 0 )");
-		exec("INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'collections', 0 )");
-		exec("CREATE VIEW next_entry_id      AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='entries'     LIMIT 1");
-		exec("CREATE VIEW next_collection_id AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='collections' LIMIT 1");
+		exec("INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'entries',		0 )");
+		exec("INSERT INTO sqlite_sequence ( name, seq ) VALUES( 'collections',	0 )");
+		exec("CREATE VIEW next_entry_id			AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='entries'		LIMIT 1");
+		exec("CREATE VIEW next_collection_id	AS SELECT seq+1 AS id FROM sqlite_sequence WHERE name='collections'	LIMIT 1");
 
 		exec("COMMIT");
 	} else {
@@ -303,8 +303,8 @@ EntryInfo Storage::newEntry(const Id collectionId, const EntryType type, const X
 	q.first();
 	const Id entryId = q.value(0).toLongLong();
 
-	QString query = "INSERT INTO entries ( entry_id,  collection_id,  type,  jid,  nick,  body,  utc ) "
-						 "VALUES( :entry_id, :collection_id, :type, :jid, :nick, :body, :utc )";
+	QString query = "INSERT INTO entries (	 entry_id,	 collection_id,	 type,	 jid,	 nick,	 body,	 utc ) "
+									"VALUES(:entry_id,	:collection_id,	:type,	:jid,	:nick,	:body,	:utc )";
 	BindedValues values;
 	values[":entry_id"]			= QString::number(entryId);
 	values[":collection_id"]	= QString::number(collectionId);
@@ -383,8 +383,8 @@ CollectionInfo Storage::newCollection(const CollectionType type, const XMPP::Jid
 	q.first();
 	const Id collectionId = q.value(0).toLongLong();
 
-	QString query = "INSERT INTO collections (   collection_id,  ownerjid,  contactjid,  type,  start,  subject) "
-								"VALUES(:collection_id, :ownerjid, :contactjid, :type, :start, '')";
+	QString query = "INSERT INTO collections (	 collection_id,	 ownerjid,	 contactjid,	 type,	 start) "
+										"VALUES(:collection_id,	:ownerjid,	:contactjid,	:type,	:start)";
 
 	BindedValues values;
 	values[":collection_id"]= QString::number(collectionId);

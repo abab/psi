@@ -30,10 +30,10 @@
 #include <xmpp_jid.h>
 
 /*! \namespace History
- *  \brief Namespace of new event-logging system.
- *  \author Aleksey Palazhchenko
- *  \version 1.0
- *  \date Google's Summer of Code 2008 and later
+ * \brief Namespace of new event-logging system.
+ * \author Aleksey Palazhchenko
+ * \version 1.0
+ * \date Google's Summer of Code 2008 and later
  */
 namespace History
 {
@@ -52,7 +52,7 @@ class Storage;
 
 /*! \brief Wrapper for SQLite database.
  *
- *  No public interface. Class is used by friend: Storage.
+ * No public interface. Class is used by friend: Storage.
  */
 class SQLiteWrapper
 {
@@ -65,9 +65,9 @@ private:
 	~SQLiteWrapper();
 
 	/*! Executes SQL query.
-	 *  \param query - query with placeholders for values.
-	 *  \param values - pairs placeholder/value.
-	 *  \param mayFail - true, if it's ok for query to fail.
+	 * \param query - query with placeholders for values.
+	 * \param values - pairs placeholder/value.
+	 * \param mayFail - true, if it's ok for query to fail.
 	 */
 	QSqlQuery exec(const QString& query, const BindedValues& values=BindedValues(), const bool mayFail=false) const;
 
@@ -145,10 +145,10 @@ typedef QList<EntryInfo> EntriesInfo;
 
 /*! Type of Collection. */
 enum CollectionType {
-//	NormalCollection  = 1,
-	ChatCollection    = 2,	/*!< Chat. */
-	MucCollection     = 3,	/*!< Muc. */
-	PubSubCollection  = 50 // LATER rename and give a description
+//	NormalCollection	= 1,
+	ChatCollection		= 2,	/*!< Chat. */
+	MucCollection		= 3,	/*!< Muc. */
+	PubSubCollection	= 50 // LATER rename and give a description
 };
 
 /*! \brief Info about one collection. */
@@ -208,7 +208,7 @@ class Storage : public QObject
 
 public:
 	/*! Creates new storage.
-	 *  \return Pointer to new storage.
+	 * \return Pointer to new storage.
 	 */
 	static Storage* getStorage(const QString& databaseName);
 	/*! Returns existed storage. */
@@ -216,13 +216,13 @@ public:
 	virtual ~Storage();
 
 	/*! Creates new entry.
-	 *  \param collectionId - primary key of parent collection or -1.
-	 *  \param type - type of message.
-	 *  \param jid - jid of sender.
-	 *  \param nickname - nickname of sender (useful in MUCs).
-	 *  \param body - message text.
-	 *  \param dt - time (UTC) of message.
-	 *  \return New message.
+	 * \param collectionId - primary key of parent collection or -1.
+	 * \param type - type of message.
+	 * \param jid - jid of sender.
+	 * \param nickname - nickname of sender (useful in MUCs).
+	 * \param body - message text.
+	 * \param dt - time (UTC) of message.
+	 * \return New message.
 	 */
 	EntryInfo newEntry(const Id collectionId, const EntryType type, const XMPP::Jid& jid,
 						const QString& nickname, const QString& body, const QDateTime& dt);
@@ -241,7 +241,7 @@ public:
 
 	/*! Creates new collection. */
 	CollectionInfo newCollection(const CollectionType type, const XMPP::Jid& ownerJid,
-								  const XMPP::Jid& contactJid, const QDateTime& start);
+									const XMPP::Jid& contactJid, const QDateTime& start);
 
 	/*! Returns collection with specified id.*/
 	CollectionInfo collectionById(const Id collectionId);
