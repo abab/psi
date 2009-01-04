@@ -89,11 +89,6 @@ QSqlQuery SQLiteWrapper::exec(const QString& query, const BindedValues& values, 
 	return q;
 }
 
-QSqlQuery SQLiteWrapper::exec(const QueryWithValues& qwv, const bool mayFail) const
-{
-	return exec(qwv.query, qwv.values, mayFail);
-}
-
 void SQLiteWrapper::initConnection() const
 {
 #ifdef HISTORY_DEBUG_BACKEND
@@ -107,7 +102,7 @@ void SQLiteWrapper::initConnection() const
 
 void SQLiteWrapper::createSchemaIfNeeded() const
 {
-	QSqlQuery q = exec(QueryWithValues("SELECT * FROM collections LIMIT 1"), true);
+	QSqlQuery q = exec("SELECT * FROM collections LIMIT 1", BindedValues(), true);
 	if (! q.isActive()) {
 		exec("PRAGMA encoding = \"UTF-8\"");
 		exec("BEGIN");
@@ -276,33 +271,56 @@ Storage::~Storage()
 	wrapper_ = 0;
 }
 
+EntryInfo Storage::entryFromRecord(const QSqlRecord& rec)
+{
+	const Id entryId		= rec.value("entry_id").toLongLong();
+	const Id collectionId	= rec.value("collection_id").toLongLong();
+	const EntryType type	= static_cast<EntryType>(rec.value("type").toInt());
+	const XMPP::Jid jid		= rec.value("jid").toString();
+	const QString nickname	= rec.value("nick").toString();
+	const QString body		= rec.value("body").toString();
+	QDateTime dt			= xep82FormatToDateTime(rec.value("utc").toString());
+	dt.setTimeSpec(Qt::UTC);
+	return EntryInfo(entryId, collectionId, type, jid, nickname, body, dt);
+}
+
+CollectionInfo Storage::collectionFromRecord(const QSqlRecord& rec)
+{
+	const Id collectionId		= rec.value("collection_id").toLongLong();
+	const CollectionType type	= static_cast<CollectionType>(rec.value("type").toInt());
+	const XMPP::Jid ownerJid	= rec.value("ownerjid").toString();
+	const XMPP::Jid contactJid	= rec.value("contactjid").toString();
+	const QString subject		= rec.value("subject").toString();
+	QDateTime start				= xep82FormatToDateTime(rec.value("start").toString());
+	start.setTimeSpec(Qt::UTC);
+	return CollectionInfo(collectionId, type, ownerJid, contactJid, subject, start);
+}
+
 EntryInfo Storage::newEntry(const Id collectionId, const EntryType type, const XMPP::Jid& jid,
 								const QString& nickname, const QString& body, const QDateTime& dt)
 {
-	QString query("SELECT * FROM next_entry_id");
-	QSqlQuery q = wrapper_->exec(query);
+	QSqlQuery q = wrapper_->exec("SELECT * FROM next_entry_id");
 	q.first();
+	const Id entryId = q.value(0).toLongLong();
 
-	EntryInfo entry(q.value(0).toLongLong(), collectionId, type, jid, nickname, body, dt.toUTC());
-
-	query = "INSERT INTO entries ( entry_id,  collection_id,  type,  jid,  nick,  body,  utc ) "
+	QString query = "INSERT INTO entries ( entry_id,  collection_id,  type,  jid,  nick,  body,  utc ) "
 						 "VALUES( :entry_id, :collection_id, :type, :jid, :nick, :body, :utc )";
 	BindedValues values;
-	values[":entry_id"]			= QString::number(entry.id());
-	values[":collection_id"]	= QString::number(entry.collectionId());
-	values[":type"]				= QString::number(entry.type());
-	values[":jid"]				= entry.contactJid().bare();
-	values[":nick"]				= entry.contactNickname();
-	values[":body"]				= entry.body();
-	values[":utc"]				= dateTimeToXep82Format(entry.utc(), true);
+	values[":entry_id"]			= QString::number(entryId);
+	values[":collection_id"]	= QString::number(collectionId);
+	values[":type"]				= QString::number(type);
+	values[":jid"]				= jid.full();
+	values[":nick"]				= nickname;
+	values[":body"]				= body;
+	values[":utc"]				= dateTimeToXep82Format(dt.toUTC(), true);
 
 	wrapper_->exec(query, values);
-	return entry;
+	return EntryInfo(entryId, collectionId, type, jid, nickname, body, dt.toUTC());
 }
 
 EntryInfo Storage::entryById(const Id entryId)
 {
-	QString query("SELECT entry_id, collection_id, type, jid, nick, body, utc FROM entries "
+	const QString query("SELECT entry_id, collection_id, type, jid, nick, body, utc FROM entries "
 					"WHERE ( entry_id = :entry_id ) LIMIT 1");
 
 	BindedValues values;
@@ -310,16 +328,7 @@ EntryInfo Storage::entryById(const Id entryId)
 
 	QSqlQuery q = wrapper_->exec(query, values);
 	if(q.first()) {
-		const QSqlRecord rec = q.record();
-		const Id collectionId = rec.value("collection_id").toLongLong();
-		const EntryType type = static_cast<EntryType>(rec.value("type").toInt());
-		const XMPP::Jid jid = rec.value("jid").toString();
-		const QString nickname = rec.value("nick").toString();
-		const QString body = rec.value("body").toString();
-		QDateTime dt = xep82FormatToDateTime(rec.value("utc").toString());
-		dt.setTimeSpec(Qt::UTC);
-		EntryInfo entry(entryId, collectionId, type, jid, nickname, body, dt);
-		return entry;
+		return entryFromRecord(q.record());
 	} else {
 		qCritical() << entryId;
 		Q_ASSERT_X(false, "Can't find entry", "Storage::entryById");
@@ -329,7 +338,7 @@ EntryInfo Storage::entryById(const Id entryId)
 
 EntriesInfo Storage::entriesByCollectionId(const Id collectionId)
 {
-	QString query("SELECT entry_id, collection_id, type, jid, nick, body, utc FROM entries "
+	const QString query("SELECT entry_id, collection_id, type, jid, nick, body, utc FROM entries "
 					"WHERE ( collection_id = :collection_id )");
 
 	BindedValues values;
@@ -339,17 +348,7 @@ EntriesInfo Storage::entriesByCollectionId(const Id collectionId)
 	EntriesInfo entries;
 	if(q.first()) {
 		while(q.isValid()) {
-			const QSqlRecord rec = q.record();
-			const Id entryId = rec.value("entry_id").toLongLong();
-			const Id collectionId = rec.value("collection_id").toLongLong();
-			const EntryType type = static_cast<EntryType>(rec.value("type").toInt());
-			const XMPP::Jid jid = rec.value("jid").toString();
-			const QString nickname = rec.value("nick").toString();
-			const QString body = rec.value("body").toString();
-			QDateTime dt = xep82FormatToDateTime(rec.value("utc").toString());
-			dt.setTimeSpec(Qt::UTC);
-			EntryInfo entry(entryId, collectionId, type, jid, nickname, body, dt);
-			entries.append(entry);
+			entries.append(entryFromRecord(q.record()));
 			q.next();
 		}
 	} else {
@@ -361,52 +360,46 @@ EntriesInfo Storage::entriesByCollectionId(const Id collectionId)
 
 void Storage::setEntryBody(const Id entryId, const QString& body)
 {
-	QString query("UPDATE entries SET body = :body WHERE entry_id = :entry_id");
-
 	BindedValues values;
 	values[":entry_id"]	= QString::number(entryId);
 	values[":body"]		= body;
 
-	wrapper_->exec(query, values);
+	wrapper_->exec("UPDATE entries SET body = :body WHERE entry_id = :entry_id", values);
 }
 
 void Storage::removeEntry(const Id entryId)
 {
-	QString query("DELETE FROM entries WHERE entry_id = :entry_id");
-
 	BindedValues values;
 	values[":entry_id"]	= QString::number(entryId);
 
-	wrapper_->exec(query, values);
+	wrapper_->exec("DELETE FROM entries WHERE entry_id = :entry_id", values);
 }
 
 
 CollectionInfo Storage::newCollection(const CollectionType type, const XMPP::Jid& ownerJid,
 								const XMPP::Jid& contactJid, const QDateTime& start)
 {
-	QString query("SELECT * FROM next_collection_id");
-	QSqlQuery q = wrapper_->exec(query);
+	QSqlQuery q = wrapper_->exec("SELECT * FROM next_collection_id");
 	q.first();
+	const Id collectionId = q.value(0).toLongLong();
 
-	CollectionInfo col(q.value(0).toLongLong(), type, ownerJid, contactJid, "", start);
-
-	query = "INSERT INTO collections (   collection_id,  ownerjid,  contactjid,  type,  start,  subject) "
+	QString query = "INSERT INTO collections (   collection_id,  ownerjid,  contactjid,  type,  start,  subject) "
 								"VALUES(:collection_id, :ownerjid, :contactjid, :type, :start, '')";
 
 	BindedValues values;
-	values[":collection_id"]= QString::number(q.value(0).toLongLong());
-	values[":ownerjid"]		= ownerJid.bare();
-	values[":contactjid"]	= contactJid.bare();
+	values[":collection_id"]= QString::number(collectionId);
+	values[":ownerjid"]		= ownerJid.full();
+	values[":contactjid"]	= contactJid.full();
 	values[":type"]			= QString::number(type);
 	values[":start"]		= dateTimeToXep82Format(start.toUTC(), true);
 	wrapper_->exec(query, values);
 
-	return col;
+	return CollectionInfo(collectionId, type, ownerJid, contactJid, QString(), start.toUTC());
 }
 
 CollectionInfo Storage::collectionById(const Id collectionId)
 {
-	QString query("SELECT collection_id, ownerjid, contactjid, type, start, subject FROM collections "
+	const QString query("SELECT collection_id, ownerjid, contactjid, type, start, subject FROM collections "
 					"WHERE collection_id = :collection_id LIMIT 1");
 
 	BindedValues values;
@@ -414,16 +407,7 @@ CollectionInfo Storage::collectionById(const Id collectionId)
 
 	QSqlQuery q = wrapper_->exec(query, values);
 	if(q.first()) {
-		const QSqlRecord rec = q.record();
-		const CollectionType type = static_cast<CollectionType>(rec.value("type").toInt());
-		const XMPP::Jid ownerJid = rec.value("ownerjid").toString();
-		const XMPP::Jid contactJid = rec.value("contactjid").toString();
-		const QString subject = rec.value("subject").toString();
-		QDateTime start = xep82FormatToDateTime(rec.value("start").toString());
-		start.setTimeSpec(Qt::UTC);
-
-		CollectionInfo col(collectionId, type, ownerJid, contactJid, subject, start);
-		return col;
+		return collectionFromRecord(q.record());
 	} else {
 		qCritical() << collectionId;
 		Q_ASSERT_X(false, "Can't find collection", "Storage::collectionById");
@@ -433,7 +417,7 @@ CollectionInfo Storage::collectionById(const Id collectionId)
 
 CollectionsInfo Storage::collections(const XMPP::Jid& owner, const XMPP::Jid& contact)
 {
-	QString query("SELECT collection_id, ownerjid, contactjid, type, start, subject FROM collections");
+	const QString query("SELECT collection_id, ownerjid, contactjid, type, start, subject FROM collections");
 	QString where;
 	BindedValues values;
 	if(!owner.isNull()) {
@@ -454,17 +438,7 @@ CollectionsInfo Storage::collections(const XMPP::Jid& owner, const XMPP::Jid& co
 	q.first();
 	CollectionsInfo cols;
 	while(q.isValid()) {
-		const QSqlRecord rec = q.record();
-		const Id collectionId = rec.value("collection_id").toLongLong();
-		const CollectionType type = static_cast<CollectionType>(rec.value("type").toInt());
-		const XMPP::Jid ownerJid = rec.value("ownerjid").toString();
-		const XMPP::Jid contactJid = rec.value("contactjid").toString();
-		const QString subject = rec.value("subject").toString();
-		QDateTime start = xep82FormatToDateTime(rec.value("start").toString());
-		start.setTimeSpec(Qt::UTC);
-
-		CollectionInfo col(collectionId, type, ownerJid, contactJid, subject, start);
-		cols.append(col);
+		cols.append(collectionFromRecord(q.record()));
 		q.next();
 	}
 	return cols;
@@ -472,13 +446,11 @@ CollectionsInfo Storage::collections(const XMPP::Jid& owner, const XMPP::Jid& co
 
 void Storage::setCollectionSubject(const Id collectionId, const QString& subject)
 {
-	QString query("UPDATE collections SET subject = :subject WHERE collection_id = :collection_id");
-
 	BindedValues values;
 	values[":subject"]		= subject;
 	values[":collection_id"]= QString::number(collectionId);
 
-	wrapper_->exec(query, values);
+	wrapper_->exec("UPDATE collections SET subject = :subject WHERE collection_id = :collection_id", values);
 }
 
 void Storage::removeCollection(const Id collectionId)

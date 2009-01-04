@@ -46,14 +46,6 @@ typedef QList<Id> IdList;
 
 typedef QMap<QString, QString> BindedValues;
 
-struct QueryWithValues
-{
-	QString query;
-	BindedValues values;
-	QueryWithValues(const QString& q, const BindedValues& v = BindedValues()) :
-		query(q), values(v) { }
-};
-
 class Storage;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +70,6 @@ private:
 	 *  \param mayFail - true, if it's ok for query to fail.
 	 */
 	QSqlQuery exec(const QString& query, const BindedValues& values=BindedValues(), const bool mayFail=false) const;
-	QSqlQuery exec(const QueryWithValues& qwv, const bool mayFail=false) const;
 
 	/*! Low-level stuff: locking_mode, synchronous, etc.*/
 	void initConnection() const;
@@ -267,6 +258,9 @@ public:
 private:
 	/*! Private constructor. Used by getStorage(). */
 	Storage(const QString& databaseName);
+
+	static EntryInfo entryFromRecord(const QSqlRecord& record);
+	static CollectionInfo collectionFromRecord(const QSqlRecord& record);
 
 private:
 	static QPointer<Storage> instance_;
