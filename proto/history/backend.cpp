@@ -163,6 +163,17 @@ EntryInfo::EntryInfo(const Id entryId, const Id collectionId, const EntryType ty
 {
 }
 
+bool EntryInfo::operator==(const EntryInfo& right)
+{
+	return (id()				== right.id() &&
+			collectionId()		== right.collectionId() &&
+			type()				== right.type() &&
+			body()				== right.body() &&
+			utc()				== right.utc() &&
+			contactJid()		== right.contactJid() &&
+			contactNickname()	== right.contactNickname());
+}
+
 Id EntryInfo::id() const
 {
 	return id_;
@@ -208,6 +219,16 @@ CollectionInfo::CollectionInfo(const Id collectionId, const CollectionType type,
 : id_(collectionId), type_(type), ownerJid_(ownerJid), contactJid_(contactJid),
 	subject_(subject), start_(start)
 {
+}
+
+bool CollectionInfo::operator==(const CollectionInfo& right)
+{
+	return (id()				== right.id() &&
+			contactJid()		== right.contactJid() &&
+			ownerJid()			== right.ownerJid() &&
+			type()				== right.type() &&
+			start()				== right.start() &&
+			subject()			== right.subject());
 }
 
 Id CollectionInfo::id() const
