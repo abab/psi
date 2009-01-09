@@ -23,28 +23,60 @@ using namespace History;
 
 #ifdef HISTORY_DEBUG_MODELS
 #include <QDebug>
+
+int HistoryItem::globalItemsCount_ = 0;
 #endif
 
-HistoryItem::HistoryItem(const int initialColumnCount)
-	: parentItem_(this)
+HistoryItem::HistoryItem(HistoryItem* parent, const int initialColumnCount)
+	: parentItem_(0)
 {
-	for(int colNo=0; colNo<initialColumnCount; ++colNo) {
+#ifdef HISTORY_DEBUG_MODELS
+	++globalItemsCount_;
+#endif
+	if(parent) {
+		parent->appendChild(this);
+	}
+	addEmptyColumns(initialColumnCount);
+}
+
+HistoryItem::~HistoryItem()
+{
+	if(parentItem_) {
+		parentItem_->removeChild(this);
+	}
+	qDeleteAll(childItems_);
+#ifdef HISTORY_DEBUG_MODELS
+	--globalItemsCount_;
+#endif
+}
+
+void HistoryItem::addEmptyColumns(int columns)
+{
+	for(int colNo=0; colNo<columns; ++colNo) {
 		itemData_.append(DataCell());
 	}
 }
 
-void HistoryItem::setParent(HistoryItem *parent)
+void HistoryItem::appendChild(HistoryItem* child)
 {
-	Q_ASSERT(parent);
-	Q_ASSERT(parent->parent());
-	parentItem_ = parent;
+	Q_ASSERT(child);
+	Q_ASSERT(child->parentItem_ == 0);
+	childItems_.append(child);
+	child->parentItem_ = this;
 }
+
 
 void HistoryItem::removeChild(HistoryItem* child)
 {
 	Q_ASSERT(child);
+	Q_ASSERT(child->parentItem_ == this);
+#ifdef HISTORY_DEBUG_MODELS
 	const int count = childItems_.removeAll(child);
 	Q_ASSERT(count == 1);
+#else
+	childItems_.removeOne(child);	// faster
+#endif
+	child->parentItem_ = 0;
 }
 
 HistoryItem* HistoryItem::child(const int row) const
@@ -58,18 +90,19 @@ HistoryItem* HistoryItem::child(const int row) const
 QVariant HistoryItem::data(const int column, const int role) const
 {
 	Q_ASSERT(column >= 0);
+	Q_ASSERT(column < columnCount());
 	Q_ASSERT((column == 0) || (role < Qt::UserRole));	// all custom roles _should_ be in column 0
-	const QVariant d = (data(column)).value(role, QVariant());
+	const QVariant d = itemData_.at(column).value(role, QVariant());
 	Q_ASSERT_X(d.isValid() || role < Qt::UserRole,
 			qPrintable(QString("HistoryItem::date(%1,%2)").arg(column).arg(role)),
 			"invalid data");
 	return d;
 }
 
-const DataCell& HistoryItem::data(const int column) const
+DataCell HistoryItem::data(const int column) const
 {
 	Q_ASSERT(column >= 0);
-	Q_ASSERT(column<columnCount());
+	Q_ASSERT(column < columnCount());
 	return itemData_.at(column);
 }
 
@@ -82,12 +115,8 @@ int HistoryItem::row() const
 void HistoryItem::addData(const int column, const int role, const QVariant& data)
 {
 	Q_ASSERT(column >= 0);
-	if(columnCount() <= column) {
-		// add empty columns
-		for(int colNo=columnCount(); colNo<=column; ++colNo) {
-			itemData_.append(DataCell());
-		}
-	}
+	addEmptyColumns(column - columnCount() + 1);
+	Q_ASSERT(column < columnCount());
 	itemData_[column][role] = data;
 }
 

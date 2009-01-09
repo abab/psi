@@ -39,18 +39,16 @@ class HistoryItem
 {
 	// no Q_OBJECT - pure C++ class
 public:
-	/*! Creates new item. Default parent is \e this.*/
-	HistoryItem(const int initialColumnCount = 0);
-	/*! Deletes item and all child items. */
-	~HistoryItem() { qDeleteAll(childItems_); }
+	/*! Creates new item.*/
+	explicit HistoryItem(HistoryItem* parent = 0, const int initialColumnCount = 0);
+	/*! Deletes item and all child items.*/
+	~HistoryItem();
 
-	/*! Sets parent for item. \e Parent should be existed item. */
-	void setParent(HistoryItem *parent);
-	/*! Returns parent item. */
+	/*! Returns parent item.*/
 	HistoryItem* parent() const { return parentItem_; }
 
 	/*! Appends existed child to item.*/
-	void appendChild(HistoryItem* child) { childItems_.append(child); }
+	void appendChild(HistoryItem* child);
 	/*! Removes child item.*/
 	void removeChild(HistoryItem* child);
 	/*! Returns child item by row number.*/
@@ -64,7 +62,7 @@ public:
 	/*! Returns data by column and role.*/
 	QVariant data(const int column, const int role) const;
 	/*! Return data for all roles in this column. */
-	const DataCell& data(const int column) const;
+	DataCell data(const int column) const;
 
 	/*! Adds data with role to column.*/
 	void addData(const int column, const int role, const QVariant &data);
@@ -77,12 +75,20 @@ public:
 #ifdef HISTORY_DEBUG_MODELS
 	void dump() const;
 	void dumpAll() const;
+	static int globalItemsCount() { return globalItemsCount_; }
 #endif
+
+private:
+	void addEmptyColumns(int columns);
 
 private:
 	HistoryItem* parentItem_;
 	QList<HistoryItem*> childItems_;
 	DataRow itemData_;
+
+#ifdef HISTORY_DEBUG_MODELS
+	static int globalItemsCount_;
+#endif
 };
 
 }	// namespace
