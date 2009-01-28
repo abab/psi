@@ -91,13 +91,11 @@ CollectionsModel::~CollectionsModel()
 
 QModelIndex CollectionsModel::addOwner(const XMPP::Jid& owner)
 {
-	HistoryItem* item = new HistoryItem();
+	HistoryItem* item = new HistoryItem(root_);
 	item->addData(0, Qt::DisplayRole, owner.bare());
 	item->addData(0, Qt::DecorationRole, QIcon(":/history/owner.png"));
 	item->addData(0, CollectionOwnerJidRole, owner.bare());
 
-	item->setParent(root_);
-	root_->appendChild(item);
 	return indexFromItem(item, 0);
 }
 
@@ -121,7 +119,7 @@ void CollectionsModel::addContacts(const XMPP::Jid& owner, const QModelIndex& pa
 		if(!addedContacts.contains(contact)) {
 			addedContacts.append(contact);
 
-			HistoryItem* item = new HistoryItem();
+			HistoryItem* item = new HistoryItem(itemFromIndex(parent));
 			item->addData(0, Qt::DisplayRole, contact.bare());
 			if(col.type() != MucCollection) {
 		    	item->addData(0, Qt::DecorationRole, QIcon(":/history/contact_chat.png"));
@@ -129,10 +127,6 @@ void CollectionsModel::addContacts(const XMPP::Jid& owner, const QModelIndex& pa
 		    	item->addData(0, Qt::DecorationRole, QIcon(":/history/contact_muc.png"));
 			}
 			item->addData(0, CollectionContactJidRole, contact.bare());
-
-			HistoryItem* p = itemFromIndex(parent);
-			item->setParent(p);
-			p->appendChild(item);
 
 			// collections - 3 level
 			addCollections(owner, contact, indexFromItem(item, 0));
@@ -144,16 +138,12 @@ void CollectionsModel::addCollections(const XMPP::Jid& owner, const XMPP::Jid& c
 {
 	CollectionsInfo cols = storage_->collections(owner, contact);
 	foreach(CollectionInfo col, cols) {
-		HistoryItem* item = new HistoryItem();
+		HistoryItem* item = new HistoryItem(itemFromIndex(parent));
 		QString subject = col.subject();
 		item->addData(0, Qt::DisplayRole, subject.isEmpty() ? NO_SUBJECT : subject);
 		item->addData(0, Qt::EditRole, subject);
     	item->addData(0, Qt::DecorationRole, QIcon(":/history/collection.png"));
 		item->addData(0, CollectionIdRole, col.id());
-
-		HistoryItem* p = itemFromIndex(parent);
-		item->setParent(p);
-		p->appendChild(item);
 	}
 }
 
@@ -372,7 +362,7 @@ void EntriesModel::addEntriesFromCollection(const Id collectionId)
 	CollectionInfo col = storage_->collectionById(collectionId);
 
 	// header
-	HistoryItem *header = new HistoryItem(root_->columnCount());
+	HistoryItem *header = new HistoryItem(root_, root_->columnCount());
 	header->addData(TimeColumn,		Qt::DisplayRole,	col.start());
 	header->addData(FromColumn,		Qt::DisplayRole,	col.contactJid().full());
 	header->addData(MessageColumn,	Qt::DisplayRole,	col.subject());
@@ -383,12 +373,10 @@ void EntriesModel::addEntriesFromCollection(const Id collectionId)
 		header->addData(TypeColumn, Qt::DecorationRole,	QIcon(":/history/contact_muc.png"));
 	}
 	header->addDataToRow(Qt::BackgroundRole, CollectionHeaderBrush);
-	header->setParent(root_);
-	root_->appendChild(header);
 
 	EntriesInfo entries = storage_->entriesByCollectionId(col.id());
 	foreach(EntryInfo entry, entries) {
-		HistoryItem *item = new HistoryItem();
+		HistoryItem *item = new HistoryItem(root_);
 		item->addData(TimeColumn,		Qt::DisplayRole,    entry.utc().time().toString(OUTPUT_TIME_FORMAT));
 		item->addData(FromColumn,		Qt::DisplayRole,    entry.contactNickname());
 		item->addData(MessageColumn,	Qt::DisplayRole,    entry.body());
@@ -408,9 +396,6 @@ void EntriesModel::addEntriesFromCollection(const Id collectionId)
 			item->addDataToRow(Qt::BackgroundRole, NoteBrush);
 			item->addData(MessageColumn, Qt::EditRole, entry.body());
 		}
-
-		item->setParent(root_);
-		root_->appendChild(item);
 	}
 	loadedCollections_.append(collectionId);
 }
