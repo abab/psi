@@ -41,9 +41,7 @@ SQLiteWrapper::SQLiteWrapper(const QString& databaseName)
 
 SQLiteWrapper::~SQLiteWrapper()
 {
-	const QString connectionName = db_.connectionName();
-	db_.close();
-	QSqlDatabase::removeDatabase(connectionName);
+	// destructor of QSqlDatabase will do everything for us
 }
 
 QSqlQuery SQLiteWrapper::exec(const QString& query, const BindedValues& values, const bool mayFail) const
