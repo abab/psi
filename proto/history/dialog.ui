@@ -17,12 +17,6 @@
    <locale country="AnyCountry" language="C" />
   </property>
   <layout class="QGridLayout" name="gridLayout" >
-   <property name="margin" >
-    <number>1</number>
-   </property>
-   <property name="spacing" >
-    <number>1</number>
-   </property>
    <item row="0" column="0" >
     <widget class="QSplitter" name="splitter" >
      <property name="orientation" >
@@ -30,46 +24,11 @@
      </property>
      <widget class="QWidget" name="layoutWidget" >
       <layout class="QVBoxLayout" name="verticalLayout" >
-       <property name="spacing" >
-        <number>1</number>
-       </property>
        <item>
         <widget class="QLineEdit" name="collectionsSearchEdit" />
        </item>
        <item>
         <widget class="QTreeView" name="collectionsView" />
-       </item>
-       <item>
-        <widget class="QWidget" native="1" name="widget" >
-         <property name="minimumSize" >
-          <size>
-           <width>0</width>
-           <height>100</height>
-          </size>
-         </property>
-         <property name="maximumSize" >
-          <size>
-           <width>16777215</width>
-           <height>101</height>
-          </size>
-         </property>
-         <widget class="QPushButton" name="getCollectionsBtn" >
-          <property name="enabled" >
-           <bool>false</bool>
-          </property>
-          <property name="geometry" >
-           <rect>
-            <x>20</x>
-            <y>30</y>
-            <width>111</width>
-            <height>28</height>
-           </rect>
-          </property>
-          <property name="text" >
-           <string>Get collections</string>
-          </property>
-         </widget>
-        </widget>
        </item>
       </layout>
      </widget>

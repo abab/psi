@@ -74,8 +74,6 @@ HistoryDlg::HistoryDlg(Storage* storage /*, XMPP::Task* rootTask*/)
 	}
 
 	createActions();
-
-	connect(ui_.getCollectionsBtn, SIGNAL(clicked()), this, SLOT(onGetCollectionsBtnClicked()));
 }
 
 HistoryDlg::~HistoryDlg()
