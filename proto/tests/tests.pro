@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
 
 SUBDIRS = backend \
-		models \
+                historyitem \
 		xep82

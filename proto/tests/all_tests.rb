@@ -1,7 +1,7 @@
 #! /usr/bin/ruby
 
 CLEAN_COMMAND = 'make -s distclean';
-QMAKE_COMMAND = '/usr/local/Trolltech/Qt-4.4.3/bin/qmake';
+QMAKE_COMMAND = 'qmake-qt4';
 MAKE_COMMAND  = 'make -j 2 -s';
 
 class Tester
@@ -29,7 +29,7 @@ end
 
 tester = Tester.new()
 tester.runTestCase('backend')
-tester.runTestCase('models')
+tester.runTestCase('historyitem')
 tester.runTestCase('xep82')
 
 if(tester.failCount() == 0)

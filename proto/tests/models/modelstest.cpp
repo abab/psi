@@ -81,7 +81,7 @@ void ModelsTest::cleanupTestCase()
 
 void ModelsTest::basicTests()
 {
-	QVERIFY2((root_ == root_->parent()) && (root_ == root_->parent()->parent()), "root's parent item should be root");
+	QVERIFY2(root_->parent() == 0, "root's parent item should be 0");
 	QVERIFY2((model_->indexFromItem(root_, 0) == QModelIndex()), "root's index should be invalid");
 	QVERIFY2((model_->indexFromItem(root_, 0).parent() == QModelIndex()), "root's parent index should be invalid");
 }

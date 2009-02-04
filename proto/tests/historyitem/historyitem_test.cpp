@@ -1,4 +1,5 @@
 #include <QtTest>
+#include <QtCore>
 
 #include <model_historyitem.h>
 using namespace History;
@@ -8,28 +9,37 @@ class HistoryItemTest : public QObject
 	Q_OBJECT
 
 private slots:
-	void initTestCase();
-	void cleanupTestCase();
+	void init();
+	void cleanup();
 
-	void test();
+	void deleteTest();
+	void deleteTime();
 
 private:
-	HistoryItem* root_;
+	static HistoryItem* root_;
+	static const int collectionsCount_;
+	static const int entriesCount_;
 };
 
-void HistoryItemTest::initTestCase()
+HistoryItem* HistoryItemTest::root_ = 0;
+const int HistoryItemTest::collectionsCount_ = 50;
+const int HistoryItemTest::entriesCount_ = 100;
+
+void HistoryItemTest::init()
 {
 	QVERIFY(HistoryItem::globalItemsCount() == 0);
-}
-
-void HistoryItemTest::cleanupTestCase()
-{
-	QVERIFY(HistoryItem::globalItemsCount() == 0);
-}
-
-void HistoryItemTest::test()
-{
+	QVERIFY(root_ == 0);
 	root_ = new HistoryItem;
+}
+
+void HistoryItemTest::cleanup()
+{
+	delete root_; root_ = 0;
+	QVERIFY(HistoryItem::globalItemsCount() == 0);
+}
+
+void HistoryItemTest::deleteTest()
+{
 	QVERIFY(root_ != 0);
 	QVERIFY(root_->parent() == 0);
 
@@ -80,9 +90,25 @@ void HistoryItemTest::test()
 		QVERIFY(root_->childCount() == 0);
 	}
 
-	// data
-
 	delete root_;
+	root_ = 0;
+}
+
+void HistoryItemTest::deleteTime()
+{
+	QDateTime start = QDateTime::currentDateTime();
+
+	for(int i=0; i<collectionsCount_; ++i) {
+		HistoryItem* collection = new HistoryItem(root_);	// w/ parent
+		for(int j=0; j<entriesCount_; ++j) {
+			collection->appendChild(new HistoryItem(0));	// w/o parent
+		}
+	}
+
+	qDebug() << "create:" << start.secsTo(QDateTime::currentDateTime()) << "seconds";
+	start = QDateTime::currentDateTime();
+	delete root_;	root_ = 0;
+	qDebug() << "delete:" << start.secsTo(QDateTime::currentDateTime()) << "seconds";
 }
 
 QTEST_MAIN(HistoryItemTest)
