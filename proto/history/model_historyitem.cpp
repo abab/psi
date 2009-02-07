@@ -84,7 +84,7 @@ HistoryItem* HistoryItem::child(const int row) const
 	Q_ASSERT(row >= 0);
 	Q_ASSERT_X(row < childCount(), qPrintable(QString("row (%1) should be < childCount (%2)")
 			.arg(row).arg(childCount())), "HistoryItem::child");
-	return childItems_.value(row);
+	return childItems_.at(row);
 }
 
 QVariant HistoryItem::data(const int column, const int role) const
@@ -127,30 +127,3 @@ void HistoryItem::addDataToRow(const int role, const QVariant& data)
 		addData(colNo, role, data);
 	}
 }
-
-#ifdef HISTORY_DEBUG_MODELS
-
-void HistoryItem::dump() const
-{
-	qDebug() << "item:" << this;
-	qDebug() << "parent:" << parentItem_;
-	qDebug() << "child items:" << childItems_;
-	for(int i=0; i<itemData_.count(); ++i) {
-		qDebug() << "column" << i << ":";
-		DataCell dataMap = itemData_[i];
-		foreach(int role, dataMap.keys()) {
-			qDebug() << "  " << role << "-" << dataMap.value(role);
-		}
-	}
-	qDebug() << "-------------------------------------------------";
-}
-
-void HistoryItem::dumpAll() const
-{
-	dump();
-	foreach(HistoryItem* item, childItems_) {
-		item->dumpAll();
-	}
-}
-
-#endif // HISTORY_DEBUG_MODELS

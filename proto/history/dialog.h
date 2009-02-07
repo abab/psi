@@ -27,7 +27,7 @@
 
 #include <xmpp_jid.h>
 
-#include "models.h"
+#include "model_collections.h"
 //#include "archivetask.h"
 using namespace History;
 
@@ -61,8 +61,6 @@ private slots:
 
 //	void onGetCollectionsBtnClicked();
 //	void onArchiveTaskFinished();
-
-	void refreshCollectionsModel();	// FIXME HACK
 
 private:
 	void createActions();

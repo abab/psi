@@ -44,7 +44,7 @@ public:
 	/*! Deletes item and all child items.*/
 	~HistoryItem();
 
-	/*! Returns parent item.*/
+	/*! Returns parent item or 0 if item has no parent.*/
 	HistoryItem* parent() const { return parentItem_; }
 
 	/*! Appends existed child to item.*/
@@ -73,9 +73,7 @@ public:
 	int row() const;
 
 #ifdef HISTORY_DEBUG_MODELS
-	void dump() const;
-	void dumpAll() const;
-	static int globalItemsCount() { return globalItemsCount_; }
+	static int globalItemsCount_;
 #endif
 
 private:
@@ -85,10 +83,6 @@ private:
 	HistoryItem* parentItem_;
 	QList<HistoryItem*> childItems_;
 	DataRow itemData_;
-
-#ifdef HISTORY_DEBUG_MODELS
-	static int globalItemsCount_;
-#endif
 };
 
 }	// namespace

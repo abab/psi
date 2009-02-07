@@ -27,7 +27,7 @@ const int HistoryItemTest::entriesCount_ = 100;
 
 void HistoryItemTest::init()
 {
-	QVERIFY(HistoryItem::globalItemsCount() == 0);
+	QVERIFY(HistoryItem::globalItemsCount_ == 0);
 	QVERIFY(root_ == 0);
 	root_ = new HistoryItem;
 }
@@ -35,7 +35,7 @@ void HistoryItemTest::init()
 void HistoryItemTest::cleanup()
 {
 	delete root_; root_ = 0;
-	QVERIFY(HistoryItem::globalItemsCount() == 0);
+	QVERIFY(HistoryItem::globalItemsCount_ == 0);
 }
 
 void HistoryItemTest::deleteTest()

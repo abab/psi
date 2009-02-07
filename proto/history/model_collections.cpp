@@ -20,7 +20,7 @@
 
 #include <QIcon>
 
-#include "models.h"
+#include "model_collections.h"
 using namespace History;
 
 #ifdef HISTORY_DEBUG_MODELS
@@ -345,7 +345,8 @@ bool EntriesModel::setData(const QModelIndex& index, const QVariant& value, int 
 
 void EntriesModel::clearModel()
 {
-	BaseHistoryModel::clearModel();
+	delete root_;
+	root_ = new HistoryItem;
 //	root_->addData(StarColumn, Qt::DisplayRole, "");	// bookmark's star
 	root_->addData(TimeColumn,		Qt::DisplayRole, tr("Time"));
 	root_->addData(FromColumn,		Qt::DisplayRole, tr("From"));

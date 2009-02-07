@@ -18,7 +18,7 @@
  *
  */
 
-#include "model_basehistorymodel.h"
+#include "model_base.h"
 using namespace History;
 
 BaseHistoryModel::BaseHistoryModel(Storage *storage)
@@ -33,12 +33,6 @@ BaseHistoryModel::~BaseHistoryModel()
 	delete root_;
 }
 
-void BaseHistoryModel::clearModel()
-{
-	delete root_;
-	root_ = new HistoryItem();
-}
-
 HistoryItem* BaseHistoryModel::itemFromIndex(const QModelIndex& ind) const
 {
 	if (!ind.isValid()) {
@@ -49,9 +43,11 @@ HistoryItem* BaseHistoryModel::itemFromIndex(const QModelIndex& ind) const
 
 QModelIndex BaseHistoryModel::indexFromItem(HistoryItem* item, const int column) const
 {
-	Q_ASSERT(item);
 	Q_ASSERT(column >= 0);
-	return (item == root_ ? QModelIndex() : createIndex(item->row(), column, item));
+	if(!item || item == root_) {
+		return QModelIndex();
+	}
+	return createIndex(item->row(), column, item);
 }
 
 QModelIndex BaseHistoryModel::userDataIndex(const QModelIndex& ind) const
@@ -74,7 +70,7 @@ QModelIndex BaseHistoryModel::index(int row, int column, const QModelIndex& pare
 QModelIndex BaseHistoryModel::parent(const QModelIndex& ind) const
 {
 	// only first column can have child items
-	return indexFromItem(itemFromIndex(ind)->parent(), 0);	// don't worry, root's parent is root
+	return indexFromItem(itemFromIndex(ind)->parent(), 0);
 }
 
 int BaseHistoryModel::rowCount(const QModelIndex& parent) const
@@ -97,7 +93,7 @@ QVariant BaseHistoryModel::data(const QModelIndex& index, int role) const
 	if(!index.isValid()) {
 		return QVariant();
 	}
-	Q_ASSERT((index.column() == 0) || (role < Qt::UserRole));	// all custom roles _should_ be in column 0
+	Q_ASSERT_X((index.column() == 0) || (role < Qt::UserRole), "BaseHistoryModel::data", "all custom roles _should_ be in column 0");
 	return itemFromIndex(index)->data(index.column(), role);
 }
 
@@ -142,14 +138,6 @@ QModelIndexList BaseHistoryModel::match(const QModelIndex& start, int role, cons
 	}
 
 	return res;
-}
-
-void BaseHistoryModel::refreshModel()
-{
-	reset();
-#ifdef HISTORY_DEBUG_MODELS
-	setDebugTooltips(root_);
-#endif
 }
 
 #ifdef HISTORY_DEBUG_MODELS

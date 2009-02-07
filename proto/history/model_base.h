@@ -29,17 +29,21 @@
 namespace History
 {
 
-/*! \brief Base class for all history models. */
+/*! \brief Base class for all history models.
+ *	Basic rules: null item -> invalid index -> root item.
+ */
 class BaseHistoryModel : public QAbstractItemModel
 {
 	Q_OBJECT
+	Q_DISABLE_COPY(BaseHistoryModel)
+
 public:
-	BaseHistoryModel(Storage *storage);
+	explicit BaseHistoryModel(Storage *storage);
 	virtual ~BaseHistoryModel();
 
 	HistoryItem* itemFromIndex(const QModelIndex& index) const;
 	QModelIndex indexFromItem(HistoryItem* item, const int column) const;
-	/* Column 0 contains user (developer) data - ids, etc. */
+	/*! Column 0 contains user (developer) data - ids, etc. */
 	QModelIndex userDataIndex(const QModelIndex& index) const;
 
 	// virtuals from QAbstractItemModel
@@ -68,20 +72,9 @@ public:
 	void setDebugTooltips(HistoryItem* parent);
 #endif
 
-public slots:
-	/*! Removes all items.*/
-	virtual void clearModel();
-	/*! Send signal to view to redraw.*/
-	void refreshModel();
-
 protected:
 	Storage* storage_;
 	HistoryItem* root_;
-
-private:
-	// disabled
-	BaseHistoryModel(const BaseHistoryModel &);
-	BaseHistoryModel& operator=(const BaseHistoryModel &);
 };
 
 }	// namespace

@@ -22,14 +22,9 @@
 #define _MODELS_H_
 
 #include "model_historyitem.h"
-#include "model_basehistorymodel.h"
+#include "model_base.h"
 
-#include <QAbstractItemModel>
-#include <QDateTime>
-#include <QPointer>
-#include <QColor>
 #include <QBrush>
-#include <QDebug>
 
 #include "backend.h"
 

@@ -19,6 +19,7 @@
  */
 
 #include <QTimer>	// FIXME remove this!
+#include <QDebug>
 
 #include "xmpp_xmlcommon.h"
 
@@ -115,7 +116,6 @@ void HistoryDlg::showEntriesFromCollections(const IdList& list)
 	foreach(qint64 id, list) {
 		entriesUnfiltered_->addEntriesFromCollection(id);
 	}
-	entriesUnfiltered_->refreshModel();
 
 	ui_.entriesView->resizeColumnsToContents();
 	ui_.entriesView->resizeRowsToContents();
@@ -231,9 +231,6 @@ void HistoryDlg::onRemoveSelectedCollections()
 		sourceIndexes.append(collections_->mapToSource(proxyIndex));
 	}
 	collectionsUnfiltered_->removeItems(sourceIndexes);
-
-	entriesUnfiltered_->clearModel();
-	entriesUnfiltered_->refreshModel();
 }
 
 void HistoryDlg::onAddNote()
@@ -357,15 +354,3 @@ void HistoryDlg::onArchiveTaskFinished()
 	}
 }
 */
-
-// FIXME one big hack
-void HistoryDlg::refreshCollectionsModel()
-{
-	// FIXME this is simply ugly!
-	collectionsUnfiltered_->fillModel();
-	collectionsUnfiltered_->refreshModel();
-#ifdef HISTORY_DEBUG_MODELS
-	collectionsUnfiltered_->setDebugTooltips(collectionsUnfiltered_->itemFromIndex(QModelIndex()));
-#endif
-}
-
