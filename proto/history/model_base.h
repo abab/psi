@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef _MODEL_BASEHISTORYMODEL_H_
-#define _MODEL_BASEHISTORYMODEL_H_
+#ifndef _MODEL_BASE_H_
+#define _MODEL_BASE_H_
 
 #include "model_historyitem.h"
 #include "backend.h"
@@ -30,7 +30,7 @@ namespace History
 {
 
 /*! \brief Base class for all history models.
- *	Basic rules: null item -> invalid index -> root item.
+ *	Basic rule: invalid index <-> root item.
  */
 class BaseHistoryModel : public QAbstractItemModel
 {
@@ -47,7 +47,6 @@ public:
 	QModelIndex userDataIndex(const QModelIndex& index) const;
 
 	// virtuals from QAbstractItemModel
-
 	virtual QModelIndex index(int row, int column, const QModelIndex& parent) const;
 	virtual QModelIndex parent(const QModelIndex& index) const;
 	virtual int rowCount(const QModelIndex& parent) const;
@@ -79,4 +78,4 @@ protected:
 
 }	// namespace
 
-#endif	// _MODEL_BASEHISTORYMODEL_H_
+#endif	// _MODEL_BASE_H_

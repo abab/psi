@@ -36,6 +36,7 @@ BaseHistoryModel::~BaseHistoryModel()
 HistoryItem* BaseHistoryModel::itemFromIndex(const QModelIndex& ind) const
 {
 	if (!ind.isValid()) {
+		qDebug("itemFromIndex - invalid index");
 		return root_;
 	}
 	return static_cast<HistoryItem*>(ind.internalPointer());
@@ -43,8 +44,10 @@ HistoryItem* BaseHistoryModel::itemFromIndex(const QModelIndex& ind) const
 
 QModelIndex BaseHistoryModel::indexFromItem(HistoryItem* item, const int column) const
 {
+	Q_ASSERT(item);
 	Q_ASSERT(column >= 0);
-	if(!item || item == root_) {
+	if(item == root_) {
+		qDebug("indexFromItem - item is root_");
 		return QModelIndex();
 	}
 	return createIndex(item->row(), column, item);
@@ -60,7 +63,7 @@ QModelIndex BaseHistoryModel::userDataIndex(const QModelIndex& ind) const
 
 QModelIndex BaseHistoryModel::index(int row, int column, const QModelIndex& parent) const
 {
-	HistoryItem* item = itemFromIndex(parent);
+	const HistoryItem* item = itemFromIndex(parent);
 	Q_ASSERT(row < item->childCount());
 	HistoryItem* childItem = item->child(row);
  	Q_ASSERT(childItem);
@@ -69,13 +72,12 @@ QModelIndex BaseHistoryModel::index(int row, int column, const QModelIndex& pare
 
 QModelIndex BaseHistoryModel::parent(const QModelIndex& ind) const
 {
-	// only first column can have child items
-	return indexFromItem(itemFromIndex(ind)->parent(), 0);
+	return indexFromItem(itemFromIndex(ind)->parent(), 0);	// only 0 column can have child items
 }
 
 int BaseHistoryModel::rowCount(const QModelIndex& parent) const
 {
-	// only first column can have child items
+	// only 0 column can have child items
 	if (parent.column() > 0) {
 		return 0;
 	}
@@ -91,6 +93,7 @@ int BaseHistoryModel::columnCount(const QModelIndex& parent) const
 QVariant BaseHistoryModel::data(const QModelIndex& index, int role) const
 {
 	if(!index.isValid()) {
+		qDebug("data - index is invalid");
 		return QVariant();
 	}
 	Q_ASSERT_X((index.column() == 0) || (role < Qt::UserRole), "BaseHistoryModel::data", "all custom roles _should_ be in column 0");
@@ -116,13 +119,13 @@ QModelIndexList BaseHistoryModel::match(const QModelIndex& start, int role, cons
 		res.append(start);
 	} else if(flags == Qt::MatchContains) {
 		Q_ASSERT(value.canConvert(QVariant::String));
-		QString valueStr = value.toString();
+		const QString valueStr = value.toString();
 		if(data(start, role).toString().contains(valueStr)) {
 			res.append(start);
 		}
 	}
 
-	HistoryItem* startItem = itemFromIndex(start);
+	const HistoryItem* startItem = itemFromIndex(start);
 	const int rows = startItem->childCount();
 	for(int row=0; row<rows; ++row)
 	{
