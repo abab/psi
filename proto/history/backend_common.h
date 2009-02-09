@@ -21,6 +21,8 @@
 #ifndef _BACKEND_COMMON_H_
 #define _BACKEND_COMMON_H_
 
+#include <QList>
+
 /*! \namespace History
  * \brief Namespace of new event-logging system.
  * \author Aleksey Palazhchenko
