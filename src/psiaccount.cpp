@@ -125,10 +125,9 @@
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
 
-#ifdef AVCALL
+#include "../psimedia/psimedia.h"
 #include "avcall/jinglertp.h"
 #include "avcall/calldlg.h"
-#endif
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -339,9 +338,7 @@ public:
 	// Voice Call
 	VoiceCaller* voiceCaller;
 
-#ifdef AVCALL
 	JingleRtpManager *jingleRtpManager;
-#endif
 
 	TabManager *tabManager;
 
@@ -567,13 +564,10 @@ private slots:
 
         void incoming_call()
         {
-#ifdef AVCALL
 		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
-		CallDlg *w = new CallDlg(account, 0);
-		w->setAttribute(Qt::WA_DeleteOnClose);
-		w->setIncoming(sess);
-		w->show();
-#endif
+		AvCallEvent *ae = new AvCallEvent(sess->jid().full(), sess, account);
+		ae->setTimeStamp(QDateTime::currentDateTime());
+		account->handleEvent(ae, IncomingStanza);
         }
 
 public:
@@ -872,19 +866,18 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
 #endif
 
-#ifdef AVCALL
-	d->jingleRtpManager = new JingleRtpManager(this);
-	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
-	{
+	d->jingleRtpManager = 0;
+	if(JingleRtpManager::isSupported()) {
+		d->jingleRtpManager = new JingleRtpManager(this);
+		connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
 		QStringList features;
-		features << "urn:xmpp:jingle:0";
+		features << "urn:xmpp:jingle:1";
 		features << "urn:xmpp:jingle:apps:rtp:1";
 		features << "urn:xmpp:jingle:apps:rtp:audio";
 		//features << "urn:xmpp:jingle:apps:rtp:video";
-		features << "urn:xmpp:jingle:transports:ice-udp:0";
-		d->client->addExtension("avchat", Features(features));
+		features << "urn:xmpp:jingle:transports:ice-udp:1";
+		d->client->addExtension("avcall", Features(features));
 	}
-#endif
 
 	// Extended presence
 	if (d->options->getOption("options.extended-presence.notify").toBool()) {
@@ -1386,9 +1379,9 @@ void PsiAccount::cs_connected()
 
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
-#ifdef AVCALL
-		d->jingleRtpManager->setSelfAddress(d->localAddress);
-#endif
+
+		if(d->jingleRtpManager)
+			d->jingleRtpManager->setSelfAddress(d->localAddress);
 	}
 }
 
@@ -3056,7 +3049,6 @@ void PsiAccount::changeStatus(int x)
 
 void PsiAccount::actionVoice(const Jid &j)
 {
-#ifdef AVCALL
 	Jid j2 = j;
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
@@ -3068,7 +3060,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->setOutgoing(j2);
 	w->show();
-#else
+/*
 	Q_ASSERT(voiceCaller() != NULL);
 
 	Jid jid;
@@ -3095,7 +3087,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	VoiceCallDlg* vc = new VoiceCallDlg(jid,voiceCaller());
 	vc->show();
 	vc->call();
-#endif
+*/
 }
 
 void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
@@ -3672,7 +3664,7 @@ void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QStrin
 void PsiAccount::dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
 {
 	QString re = (!subject.isEmpty() && subject.left(3) != "Re:") ? "Re: " : QString();
-	dj_newMessage(jid, TextUtil::quote(body), re + subject, thread);
+	dj_newMessage(jid, !body.isEmpty() ? TextUtil::quote(body) : body, re + subject, thread);
 }
 
 void PsiAccount::dj_replyMessage(const Jid &j, const QString &body)
@@ -3995,6 +3987,11 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
 		doPopup = true;
 		popupType = PsiPopup::AlertFile;
+	}
+	else if(e->type() == PsiEvent::AvCall) {
+		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
+		doPopup = true;
+		popupType = PsiPopup::AlertAvCall;
 	}
 	else if(e->type() == PsiEvent::RosterExchange) {
 		RosterExchangeEvent* re = (RosterExchangeEvent*) e;
@@ -5050,11 +5047,7 @@ BookmarkManager* PsiAccount::bookmarkManager()
 
 JingleRtpManager *PsiAccount::jingleRtpManager()
 {
-#ifdef AVCALL
 	return d->jingleRtpManager;
-#else
-	return 0;
-#endif
 }
 
 /**
