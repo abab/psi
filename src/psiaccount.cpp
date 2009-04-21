@@ -276,6 +276,7 @@ public:
 		, rcForwardServer(0)
 		, avatarFactory(0)
 		, voiceCaller(0)
+		, jingleRtpManager(0)
 		, tabManager(0)
 #ifdef GOOGLE_FT
 		, googleFTManager(0)
@@ -866,7 +867,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
 #endif
 
-	d->jingleRtpManager = 0;
 	if(JingleRtpManager::isSupported()) {
 		d->jingleRtpManager = new JingleRtpManager(this);
 		connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
@@ -1149,6 +1149,9 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 			setStatusDirect(d->loginStatus);
 		}
 	}
+
+	if(d->jingleRtpManager)
+		d->jingleRtpManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
 
 	cpUpdate(d->self);
 	updatedAccount();
