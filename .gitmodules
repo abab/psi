@@ -1,3 +1,6 @@
 [submodule "iris"]
 	path = iris
 	url = git://git.psi-im.org/iris.git
+[submodule "breakpad-qt"]
+	path = third-party/breakpad-qt
+	url = git://github.com/AlekSi/breakpad-qt.git
